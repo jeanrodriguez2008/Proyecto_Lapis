@@ -339,3 +339,4 @@ def ver_mensajes_chat(db: Session = Depends(get_db), usuario: models.Usuario = D
     
     # Traemos los últimos 50 mensajes enviados al chat
     return db.query(models.ChatMensaje).order_by(models.ChatMensaje.fecha_envio.desc()).limit(50).all()
+# Un comentario de prueba para forzar git
