@@ -1,32 +1,20 @@
+import os
 import hashlib
 import uuid
 from typing import List
 from fastapi import FastAPI, Depends, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 import models
 import schemas
 from database import get_db, engine
 
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import os
-
-app = FastAPI()
-
-# Montar la carpeta frontend (si tienes imágenes, js, etc.)
-if os.path.exists("frontend"):
-    app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
-
-# Ruta principal que entrega el index.html
-@app.get("/")
-def read_root():
-    return FileResponse("index.html")
-
-# Crear tablas automáticamente en la base de datos si no existen
-models.Base.metadata.create_all(bind=engine)
+# ==========================================
+# 🚀 INICIALIZACIÓN DE LA APLICACIÓN
+# ==========================================
 
 app = FastAPI(
     title="Proyecto Lapis - API del Templo",
@@ -34,14 +22,37 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configuración de CORS para permitir que tu Frontend interactúe con el Backend
+# Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, restringe esto al dominio de tu frontend
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Crear tablas automáticamente en la base de datos si no existen
+models.Base.metadata.create_all(bind=engine)
+
+
+# ==========================================
+# 📁 ARCHIVOS ESTÁTICOS Y RUTA PRINCIPAL
+# ==========================================
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
+# Montar carpeta frontend si existe
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
+
+# Ruta principal que sirve index.html desde la carpeta frontend
+@app.get("/")
+def read_root():
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"error": "No se encontró index.html dentro de la carpeta frontend"}
 
 
 # ==========================================
@@ -67,7 +78,6 @@ def obtener_usuario_actual(
             detail="Se requiere cabecera de Autorización (Authorization)."
         )
     
-    # El header suele venir como "Bearer <usuario>" o simplemente "<usuario>"
     username = authorization.replace("Bearer ", "").strip()
     
     user = db.query(models.Usuario).filter(models.Usuario.usuario == username).first()
@@ -85,12 +95,10 @@ def obtener_usuario_actual(
 
 @app.post("/api/auth/registro", response_model=schemas.UsuarioResponse, status_code=status.HTTP_201_CREATED)
 def registrar_usuario(req: schemas.RegistroRequest, db: Session = Depends(get_db)):
-    # 1. Verificar si el nombre de usuario ya existe
     usuario_existente = db.query(models.Usuario).filter(models.Usuario.usuario == req.usuario).first()
     if usuario_existente:
         raise HTTPException(status_code=400, detail="El nombre de usuario ya está registrado.")
     
-    # 2. Validar la Palabra de Pase (Código de Pase)
     codigo = db.query(models.CodigoPase).filter(
         models.CodigoPase.codigo == req.codigo_pase, 
         models.CodigoPase.usado == False
@@ -102,10 +110,8 @@ def registrar_usuario(req: schemas.RegistroRequest, db: Session = Depends(get_db
             detail="Palabra de pase inválida o ya utilizada. Solicite una nueva a una Dignidad."
         )
     
-    # 3. Quemar el código para que no pueda volver a usarse (Un solo uso garantizado)
     codigo.usado = True
     
-    # 4. Crear el nuevo usuario con su rol correspondiente
     nuevo_usuario = models.Usuario(
         usuario=req.usuario,
         password_hash=encriptar_password(req.password),
@@ -125,11 +131,9 @@ def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=400, detail="Usuario o contraseña incorrectos.")
     
-    # Validar hash de contraseña
     if user.password_hash != encriptar_password(req.password):
         raise HTTPException(status_code=400, detail="Usuario o contraseña incorrectos.")
     
-    # Ajustado para que el frontend pueda leer "nombre" y "token" cómodamente
     return {
         "token": user.usuario,
         "usuario": {
@@ -141,19 +145,17 @@ def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
 
 
 # ==========================================
-# 🎫 ENDPOINTS DE CÓDIGOS DE PASE (Alineados con js)
+# 🎫 ENDPOINTS DE CÓDIGOS DE PASE
 # ==========================================
 
 @app.post("/api/codigos/generar", response_model=schemas.CodigoPaseResponse)
 def generar_codigo_pase(db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
-    # Solo el Trono o el Venerable Maestro pueden generar palabras de pase
     if autor.rol not in ["trono", "venerable_maestro"]:
         raise HTTPException(
             status_code=403, 
             detail="Solo el Trono o el Venerable Maestro pueden consagrar palabras de pase."
         )
     
-    # Generamos un código único aleatorio de 8 caracteres
     nuevo_codigo = str(uuid.uuid4())[:8].upper()
     
     pase = models.CodigoPase(
@@ -175,12 +177,11 @@ def listar_codigos_pase(db: Session = Depends(get_db), autor: models.Usuario = D
 
 
 # ==========================================
-# 📐 ENDPOINTS DEL CENSO (Alineados con js)
+# 📐 ENDPOINTS DEL CENSO
 # ==========================================
 
 @app.post("/api/censo/consignar", response_model=schemas.CensoResponse)
 def registrar_en_censo(req: schemas.CensoCreate, db: Session = Depends(get_db)):
-    # Validar si la cédula ya se registró
     cedula_existente = db.query(models.Censo).filter(models.Censo.cedula == req.cedula).first()
     if cedula_existente:
         raise HTTPException(status_code=400, detail="Esta cédula ya tiene una planilla de censo registrada.")
@@ -216,13 +217,12 @@ def registrar_en_censo(req: schemas.CensoCreate, db: Session = Depends(get_db)):
         "pregunta_deporte": nueva_planilla.pregunta_deporte,
         "estado": nueva_planilla.estado,
         "fecha_creacion": nueva_planilla.fecha_creacion,
-        "message": "Planilla consignada con éxito a los archivos de la Logia." # Para el alert() del front
+        "message": "Planilla consignada con éxito a los archivos de la Logia."
     }
 
 
 @app.get("/api/censo/listar", response_model=List[schemas.CensoResponse])
 def ver_planillas_censo(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    # Solo dignidades (Trono, Venerable, Vigilantes) pueden auditar el censo
     if usuario.rol not in ["trono", "venerable_maestro", "primer_vigilante", "segundo_vigilante"]:
         raise HTTPException(status_code=403, detail="No posees el rango para auditar el Censo.")
     
@@ -232,7 +232,7 @@ def ver_planillas_censo(db: Session = Depends(get_db), usuario: models.Usuario =
 @app.patch("/api/censo/{planilla_id}/estado")
 def dictaminar_planilla(
     planilla_id: int, 
-    nuevo_estado: str, # 'Aprobado' o 'Rechazado'
+    nuevo_estado: str,
     db: Session = Depends(get_db), 
     usuario: models.Usuario = Depends(obtener_usuario_actual)
 ):
@@ -252,12 +252,11 @@ def dictaminar_planilla(
 
 
 # ==========================================
-# 📜 ENDPOINTS DE TRAZADOS (PUBLICACIONES SEGMENTADAS)
+# 📜 ENDPOINTS DE TRAZADOS
 # ==========================================
 
 @app.post("/api/trazados", response_model=schemas.TrazadoResponse)
 def crear_trazado(req: schemas.TrazadoCreate, db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
-    # Los aprendices no pueden publicar trazados, solo leerlos
     if autor.rol == "aprendiz":
         raise HTTPException(status_code=403, detail="Los Aprendices no tienen permitido publicar Trazados.")
     
@@ -276,12 +275,6 @@ def crear_trazado(req: schemas.TrazadoCreate, db: Session = Depends(get_db), aut
 
 @app.get("/api/trazados", response_model=List[schemas.TrazadoResponse])
 def ver_trazados(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    """
-    Filtro de seguridad por grados:
-    - Un aprendiz solo lee trazados de la cámara 'aprendiz'.
-    - Un compañero lee trazados de 'aprendiz' y 'companero'.
-    - Un maestro/dignidad lee absolutamente todo.
-    """
     query = db.query(models.Trazado)
     
     if usuario.rol == "aprendiz":
@@ -294,9 +287,6 @@ def ver_trazados(db: Session = Depends(get_db), usuario: models.Usuario = Depend
 
 @app.delete("/api/trazados/{trazado_id}")
 def borrar_trazado(trazado_id: int, db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    """
-    Solo el Trono o el Venerable Maestro tienen potestad para borrar trazados.
-    """
     if usuario.rol not in ["trono", "venerable_maestro"]:
         raise HTTPException(status_code=403, detail="Solo el Trono o el Venerable Maestro pueden borrar trazados.")
     
@@ -310,12 +300,11 @@ def borrar_trazado(trazado_id: int, db: Session = Depends(get_db), usuario: mode
 
 
 # ==========================================
-# 💬 ENDPOINTS DEL CHAT (CÁMARA DEL MEDIO)
+# 💬 ENDPOINTS DEL CHAT
 # ==========================================
 
 @app.post("/api/chat", response_model=schemas.ChatMensajeResponse)
 def enviar_mensaje_chat(req: schemas.ChatMensajeCreate, db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    # Restringido para Maestros y Dignidades superiores
     roles_permitidos = ["trono", "venerable_maestro", "primer_vigilante", "segundo_vigilante", "maestro"]
     if usuario.rol not in roles_permitidos:
         raise HTTPException(status_code=403, detail="Solo los Maestros Masones pueden hablar en el chat.")
@@ -337,6 +326,4 @@ def ver_mensajes_chat(db: Session = Depends(get_db), usuario: models.Usuario = D
     if usuario.rol not in roles_permitidos:
         raise HTTPException(status_code=403, detail="El chat de la Cámara del Medio está oculto a tus ojos.")
     
-    # Traemos los últimos 50 mensajes enviados al chat
     return db.query(models.ChatMensaje).order_by(models.ChatMensaje.fecha_envio.desc()).limit(50).all()
-# Un comentario de prueba para forzar git
