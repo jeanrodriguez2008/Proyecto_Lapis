@@ -9,6 +9,22 @@ import models
 import schemas
 from database import get_db, engine
 
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+app = FastAPI()
+
+# Montar la carpeta frontend (si tienes imágenes, js, etc.)
+if os.path.exists("frontend"):
+    app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+
+# Ruta principal que entrega el index.html
+@app.get("/")
+def read_root():
+    return FileResponse("index.html")
+
 # Crear tablas automáticamente en la base de datos si no existen
 models.Base.metadata.create_all(bind=engine)
 
