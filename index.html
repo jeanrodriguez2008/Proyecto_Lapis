@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto Lapis — Portal Institucional</title>
+    
+    <!-- Tailwind CSS para el diseño estilizado -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Georgia', 'ui-serif', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950 antialiased font-sans">
+
+    <!-- CONTENEDOR RAÍZ DE ALPINE.JS -->
+    <div x-data="appLapis" class="min-h-screen flex flex-col justify-between">
+        
+        <!-- 🏛️ BARRA DE NAVEGACIÓN SUPERIOR -->
+        <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-900 sticky top-0 z-50 transition duration-300 py-3">
+            <div class="container mx-auto px-4 max-w-5xl flex flex-col items-center justify-center space-y-3">
+                
+                <!-- LOGO SIN RECUADRO Y NOMBRE DE LA LOGIA CENTRADOS -->
+                <div @click="cambiarVista('pasos_perdidos')" class="flex flex-col items-center cursor-pointer group text-center">
+                    <img src="frontend/logo.png" alt="Logo Taller" class="w-24 h-24 object-contain filter drop-shadow-xl group-hover:scale-105 transition-transform duration-300 mb-2">
+                    <div>
+                        <h1 class="font-serif font-bold tracking-wide text-slate-200 group-hover:text-amber-400 transition text-base uppercase">
+                            RESP.: LOGIA DIGNIDAD HUMANA N° 149
+                        </h1>
+                        <p class="text-[10px] uppercase tracking-widest text-slate-400 mt-0.5 font-medium">
+                            AL OR.: DE MARACAY - VENEZUELA
+                        </p>
+                    </div>
+                </div>
+
+                <nav class="flex items-center space-x-1 sm:space-x-2 pt-1">
+                    <button @click="cambiarVista('pasos_perdidos')" 
+                        :class="vistaActual === 'pasos_perdidos' ? 'border-amber-500/40 text-amber-400 bg-amber-500/5' : 'border-slate-800 text-slate-300 hover:bg-slate-900'" 
+                        class="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest px-2 sm:px-2.5 py-1.5 rounded border transition">
+                        🏛️ Pasos Perdidos
+                    </button>
+
+                    <template x-if="!sesionActiva">
+                        <div class="flex items-center space-x-1 sm:space-x-2">
+                            <button @click="cambiarVista('tocar_puerta')" 
+                                :class="vistaActual === 'tocar_puerta' ? 'border-amber-500/40 text-amber-400 bg-amber-500/5' : 'border-slate-800 text-slate-300 hover:bg-slate-900'" 
+                                class="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest px-2 sm:px-2.5 py-1.5 rounded border transition">
+                                🚪 Tocar Puerta
+                            </button>
+
+                            <button @click="cambiarVista('palabra_pase')" 
+                                :class="vistaActual === 'palabra_pase' ? 'border-amber-500/40 text-amber-400 bg-amber-500/5' : 'border-slate-800 text-slate-300 hover:bg-slate-900'" 
+                                class="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest px-2 sm:px-2.5 py-1.5 rounded border transition">
+                                🔑 Palabra de Pase
+                            </button>
+
+                            <button @click="cambiarVista('umbral')" 
+                                :class="['umbral', 'recuperar_password'].includes(vistaActual) ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-300 hover:bg-slate-850'" 
+                                class="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest px-2.5 px-3 py-1.5 rounded-md transition border border-slate-800/60 shadow-lg">
+                                Umbral
+                            </button>
+                        </div>
+                    </template>
+
+                    <template x-if="sesionActiva">
+                        <div class="flex items-center space-x-1 sm:space-x-2">
+                            <button @click="cambiarVista('umbral')"
+                                :class="vistaActual === 'umbral' ? 'border-amber-500/40 text-amber-400 bg-amber-500/5' : 'border-slate-800 text-slate-300 hover:bg-slate-900'"
+                                class="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest px-2 sm:px-2.5 py-1.5 rounded border transition">
+                                🔮 Ver Umbral
+                            </button>
+                            <button @click="cambiarVista('admin')" :class="vistaActual === 'admin' ? 'border-amber-500 text-amber-400 bg-amber-500/5' : 'border-slate-800 text-slate-300 hover:bg-slate-900'" class="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest px-2.5 sm:px-3 py-1.5 rounded border transition">
+                                📜 Taller
+                            </button>
+                            <button @click="cerrarSesion()" class="bg-red-950/40 hover:bg-red-900 text-red-400 hover:text-white border border-red-900/60 px-2.5 sm:px-3 py-1.5 rounded text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition">
+                                Salir
+                            </button>
+                        </div>
+                    </template>
+                </nav>
+            </div>
+        </header>
+
+        <!-- 🔔 MODAL FLOTANTE DE EDICIÓN UNIFICADO CON SELECTOR DE CATEGORÍAS -->
+        <template x-if="modalAbierto">
+            <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-md w-full space-y-4 shadow-2xl">
+                    
+                    <!-- Formulario dinámico para Pasos Perdidos -->
+                    <template x-if="seccionDestino === 'pasos_perdidos'">
+                        <div>
+                            <h3 class="font-serif text-lg font-bold text-amber-400 mb-4">🏛️ Labrar Contenido para Pasos Perdidos</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium block mb-1">Destino / Categoría</label>
+                                    <select x-model="nuevaTarjeta.categoriaDestino" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-amber-400 focus:outline-none focus:border-amber-500 transition font-medium">
+                                        <option value="masoneria">📜 Categoría: Masonería</option>
+                                        <option value="educacion">📖 Categoría: Educación y Cultura</option>
+                                        <option value="noticias">📰 Categoría: Actualidad y Noticias</option>
+                                        <option value="filantropia">🤝 Categoría: Filantropía (Eventos)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">Título o Subtítulo del Bloque</label>
+                                    <input type="text" x-model="nuevaTarjeta.titulo" placeholder="Ej: Simbolismo Iniciático / Fecha o Eje" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">URL de Imagen Adjunta (Opcional)</label>
+                                    <input type="text" x-model="nuevaTarjeta.imagen" placeholder="https://ejemplo.com/imagen.jpg" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">Contenido Expositivo</label>
+                                    <textarea x-model="nuevaTarjeta.contenido" rows="4" placeholder="Redacta la información pública de la categoría..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition resize-none"></textarea>
+                                </div>
+                                <template x-if="nuevaTarjeta.categoriaDestino === 'educacion'">
+                                    <div class="grid grid-cols-2 gap-2 pt-1">
+                                        <div>
+                                            <label class="text-[9px] uppercase text-slate-500">Texto Enlace (Opcional)</label>
+                                            <input type="text" x-model="nuevaTarjeta.textoEnlace" placeholder="Leer más →" class="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-[11px] text-slate-300 focus:outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="text-[9px] uppercase text-slate-500">URL Destino (Opcional)</label>
+                                            <input type="text" x-model="nuevaTarjeta.enlace" placeholder="#" class="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-[11px] text-slate-300 focus:outline-none">
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Formulario para Trazados del Umbral -->
+                    <template x-if="seccionDestino === 'nuevo_trazado'">
+                        <div>
+                            <h3 class="font-serif text-lg font-bold text-amber-400 mb-4">✍️ Grabar Nuevo Trazado Arquitectónico</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">Título del Trazado</label>
+                                    <input type="text" x-model="nuevoTrazadoDatos.titulo" placeholder="Ej: El Simbolismo del Mazo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">URL de Imagen Iluminativa (Opcional)</label>
+                                    <input type="text" x-model="nuevoTrazadoDatos.imagen" placeholder="https://ejemplo.com/trazado.jpg" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">Cuerpo del Trazado</label>
+                                    <textarea x-model="nuevoTrazadoDatos.contenido" rows="4" placeholder="Escribe aquí las reflexiones del trazado..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition resize-none"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Formulario para Encuestas -->
+                    <template x-if="seccionDestino === 'nueva_encuesta'">
+                        <div>
+                            <h3 class="font-serif text-lg font-bold text-amber-400 mb-4">🏛️ Crear Nuevo Balotaje (Votación)</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">Categoría del Asunto</label>
+                                    <input type="text" x-model="nuevaEncuestaDatos.categoria" placeholder="Ej: Finanzas, Reformas, Logística" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">Pregunta / Propuesta Solemne</label>
+                                    <textarea x-model="nuevaEncuestaDatos.pregunta" rows="3" placeholder="¿Se aprueba la propuesta para...?" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition resize-none"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div class="flex justify-end space-x-2 pt-2">
+                        <button @click="modalAbierto = false" class="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs hover:bg-slate-700 transition">Cancelar</button>
+                        <button @click="procesarInyeccion()" class="px-3 py-1.5 bg-amber-500 text-slate-950 font-bold rounded-lg text-xs hover:bg-amber-400 transition">
+                            Inyectar en Cantera
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- 📖 MODAL DE LECTURA DETALLADA DE TRAZADOS Y TARJETAS PÚBLICAS -->
+        <template x-if="trazadoSeleccionado !== null">
+            <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                <div class="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-2xl max-w-2xl w-full space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-start border-b border-slate-800 pb-4">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-3 text-[10px] uppercase font-mono text-amber-500">
+                                <span x-text="trazadoSeleccionado.autor ? 'Autor: ' + trazadoSeleccionado.autor : 'Sección Pública'"></span>
+                                <span class="text-slate-600">•</span>
+                                <span x-text="trazadoSeleccionado.fecha || 'Contenido Institucional'"></span>
+                            </div>
+                            <h3 class="font-serif text-2xl font-bold text-slate-100 tracking-tight" x-text="trazadoSeleccionado.titulo"></h3>
+                        </div>
+                        <button @click="trazadoSeleccionado = null" class="text-slate-400 hover:text-amber-500 text-lg p-1 transition">✕</button>
+                    </div>
+
+                    <template x-if="trazadoSeleccionado.imagen">
+                        <div class="w-full max-h-60 rounded-xl overflow-hidden border border-slate-800">
+                            <img :src="trazadoSeleccionado.imagen" alt="Imagen Publicación" class="w-full h-full object-cover">
+                        </div>
+                    </template>
+                    
+                    <div class="text-slate-300 text-sm leading-relaxed whitespace-pre-line font-serif bg-slate-950/40 p-4 rounded-xl border border-slate-950" x-text="trazadoSeleccionado.contenido"></div>
+                    
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-800/60">
+                        <div class="flex items-center gap-2">
+                            <template x-if="trazadoSeleccionado.enlace">
+                                <a :href="trazadoSeleccionado.enlace" class="bg-amber-500 text-slate-950 font-bold uppercase text-[10px] tracking-wider px-3 py-2 rounded-lg hover:bg-amber-400 transition" x-text="trazadoSeleccionado.textoEnlace || 'Visitar Enlace'"></a>
+                            </template>
+                            <!-- EXCLUSIVIDAD: BOTÓN ELIMINAR TRAZADO (SÓLO VENERABLE Y TRONO SUPREMO) -->
+                            <template x-if="trazadoSeleccionado.idIndex !== undefined && tienePermisoEliminarTrazados()">
+                                <button @click="eliminarTrazado(trazadoSeleccionado.idIndex)" class="bg-red-950 hover:bg-red-900 text-red-400 border border-red-900/60 text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-lg transition">
+                                    🗑️ Eliminar Trazado
+                                </button>
+                            </template>
+                        </div>
+                        <button @click="trazadoSeleccionado = null" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold uppercase tracking-wider rounded-lg transition">
+                            Cerrar Lectura
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- 👁️ SECCIÓN PRINCIPAL -->
+        <main class="flex-grow container mx-auto px-4 py-8 max-w-5xl flex flex-col justify-center">
+            
+            <div class="bg-slate-900/20 border border-slate-900 rounded-2xl p-5 md:p-8 backdrop-blur-sm shadow-2xl relative overflow-hidden" style="min-height: 300px;">
+                
+                <!-- RENDERIZADO REACTIVO PARA PASOS PERDIDOS -->
+                <div x-show="vistaActual === 'pasos_perdidos'" class="space-y-10 py-4">
+                    <div class="text-center max-w-2xl mx-auto space-y-3">
+                        <span class="text-amber-500 font-serif tracking-widest text-xs uppercase block font-semibold">Portal Institucional Abierto</span>
+                        
+                        <div class="flex flex-col items-center justify-center space-y-2">
+                            <h2 class="font-serif text-3xl md:text-4xl font-bold tracking-tight text-slate-100">Sala de Pasos Perdidos</h2>
+                            <template x-if="tienePermisoEdicionPasosPerdidos()">
+                                <button @click="abrirEditor('pasos_perdidos')" class="mt-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-lg transition shadow-xl border border-amber-400/40 animate-pulse">
+                                    ✍️ Publicar Nuevo Contenido
+                                </button>
+                            </template>
+                        </div>
+                        
+                        <div class="h-0.5 w-20 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto mt-2"></div>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                            Espacio de divulgación académica, filantrópica e histórica de la Resp:. Log:. Dignidad Humana N° 149.
+                        </p>
+                    </div>
+
+                    <!-- MASONERÍA -->
+                    <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-6 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-900 pb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-lg">📜</span>
+                                <h3 class="font-serif text-lg font-bold text-amber-400">Masonería</h3>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <template x-for="(item, index) in tarjetasReactivas.masoneria" :key="index">
+                                <div @click="trazadoSeleccionado = item" class="bg-slate-900/40 border border-slate-800 p-4 rounded-lg relative group/card cursor-pointer hover:border-amber-500/40 transition shadow-md flex flex-col justify-between">
+                                    <div>
+                                        <template x-if="item.imagen">
+                                            <img :src="item.imagen" alt="Imagen Masonería" class="w-full h-32 object-cover rounded-lg mb-3 border border-slate-800">
+                                        </template>
+                                        <div class="flex justify-between items-start">
+                                            <h4 class="font-bold text-slate-200 uppercase mb-2 tracking-wide group-hover/card:text-amber-400 transition" x-text="item.titulo"></h4>
+                                            <span class="text-[9px] text-amber-500 opacity-0 group-hover/card:opacity-100 transition font-bold uppercase tracking-wider">Ampliar →</span>
+                                        </div>
+                                        <p class="text-slate-400 leading-relaxed line-clamp-3" x-text="item.contenido"></p>
+                                    </div>
+                                    <template x-if="tienePermisoEdicionPasosPerdidos()">
+                                        <button @click.stop="eliminarTarjeta('masoneria', index)" class="mt-2 self-end bg-red-950 text-red-400 border border-red-900/50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold transition hover:bg-red-900 hover:text-white">Eliminar</button>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- EDUCACIÓN Y CULTURA -->
+                    <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-6 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-900 pb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-lg">📖</span>
+                                <h3 class="font-serif text-lg font-bold text-amber-400">Educación y Cultura</h3>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-[11px]">
+                            <template x-for="(item, index) in tarjetasReactivas.educacion" :key="index">
+                                <div @click="trazadoSeleccionado = item" class="bg-slate-900/40 border border-slate-800 p-3 rounded-lg flex flex-col justify-between relative group/card cursor-pointer hover:border-amber-500/40 transition shadow-md">
+                                    <div>
+                                        <template x-if="item.imagen">
+                                            <img :src="item.imagen" alt="Imagen Educación" class="w-full h-24 object-cover rounded mb-2 border border-slate-800">
+                                        </template>
+                                        <div class="flex justify-between items-start gap-1">
+                                            <h4 class="font-bold text-slate-300 uppercase mb-1 group-hover/card:text-amber-400 transition line-clamp-2" x-text="item.titulo"></h4>
+                                            <span class="text-[9px] text-amber-500 opacity-0 group-hover/card:opacity-100 transition font-bold">📂</span>
+                                        </div>
+                                        <p class="text-slate-500 line-clamp-4" x-text="item.contenido"></p>
+                                    </div>
+                                    <template x-if="item.enlace">
+                                        <span class="text-amber-500/80 hover:text-amber-400 underline mt-2 block font-medium" x-text="item.textoEnlace"></span>
+                                    </template>
+                                    <template x-if="tienePermisoEdicionPasosPerdidos()">
+                                        <button @click.stop="eliminarTarjeta('educacion', index)" class="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 bg-red-950 text-red-400 border border-red-900/50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold transition hover:bg-red-900 hover:text-white">Eliminar</button>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- NOTICIAS Y FILANTROPÍA -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- ACTUALIDAD Y NOTICIAS -->
+                        <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-3 relative group/section">
+                            <div class="flex items-center space-x-2 border-b border-slate-900 pb-2">
+                                <span class="text-base">📰</span>
+                                <h3 class="font-serif text-base font-bold text-amber-400">Actualidad y Noticias</h3>
+                            </div>
+                            <ul class="space-y-2 text-xs">
+                                <template x-for="(item, index) in tarjetasReactivas.noticias" :key="index">
+                                    <li @click="trazadoSeleccionado = item" class="flex justify-between items-center border-b border-slate-900/50 pb-1.5 relative group/card cursor-pointer hover:text-amber-400 transition">
+                                        <span class="text-slate-400 pr-12 truncate group-hover/card:text-slate-200" x-text="item.contenido"></span>
+                                        <span class="text-slate-600 text-[10px] whitespace-nowrap group-hover/card:opacity-0 transition" x-text="item.titulo"></span>
+                                        <template x-if="tienePermisoEdicionPasosPerdidos()">
+                                            <button @click.stop="eliminarTarjeta('noticias', index)" class="absolute right-0 opacity-0 group-hover/card:opacity-100 bg-red-950 text-red-400 border border-red-900/40 px-1 py-0.5 rounded text-[8px] uppercase font-bold transition hover:bg-red-900 hover:text-white">Eliminar</button>
+                                        </template>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+
+                        <!-- FILANTROPÍA (EVENTOS) -->
+                        <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-3">
+                            <div class="flex items-center space-x-2 border-b border-slate-900 pb-2">
+                                <span class="text-base">🤝</span>
+                                <h3 class="font-serif text-base font-bold text-amber-400">Filantropía (Eventos)</h3>
+                            </div>
+                            <div class="grid grid-cols-1 gap-3">
+                                <template x-for="(item, index) in tarjetasReactivas.filantropia" :key="index">
+                                    <div @click="trazadoSeleccionado = item" class="bg-slate-900/40 border border-slate-800 p-3 rounded-lg text-xs space-y-2 relative group/card cursor-pointer hover:border-amber-500/40 transition shadow-md">
+                                        <template x-if="item.imagen">
+                                            <img :src="item.imagen" alt="Imagen Filantropía" class="w-full h-28 object-cover rounded border border-slate-800">
+                                        </template>
+                                        <p class="text-slate-400 line-clamp-2 group-hover/card:text-slate-200" x-text="item.contenido"></p>
+                                        <span class="text-[10px] uppercase font-mono bg-slate-950 text-slate-500 px-2 py-0.5 rounded border border-slate-800 block w-max" x-text="'Fecha: ' + item.titulo"></span>
+                                        <template x-if="tienePermisoEdicionPasosPerdidos()">
+                                            <button @click.stop="eliminarTarjeta('filantropia', index)" class="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 bg-red-950 text-red-400 border border-red-900/50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold transition hover:bg-red-900 hover:text-white">Eliminar</button>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INYECCIÓN ASÍNCRONA PARA EL RESTO DE LAS VISTAS ESTÁTICAS -->
+                <div x-show="vistaActual !== 'pasos_perdidos'" x-html="VistasProyectoLapis[vistaActual]"></div>
+
+                <!-- Fondo decorativo sutil -->
+                <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none select-none">
+                    <span class="text-9xl font-serif">📐</span>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- NAVEGACIÓN TÉCNICA INFERIOR -->
+        <div class="bg-slate-950/60 border-t border-slate-900 p-2 flex flex-wrap gap-2 justify-center text-[10px]">
+            <span class="text-slate-500 self-center uppercase font-mono tracking-wider mr-2">Cámaras:</span>
+            <button @click="cambiarVista('pasos_perdidos')" class="px-2 py-1 bg-slate-900 border border-slate-800 rounded hover:border-slate-700 transition text-slate-400">Inicio (Pasos Perdidos)</button>
+            <button @click="cambiarVista('tocar_puerta')" class="px-2 py-1 bg-slate-900 border border-slate-800 rounded hover:border-slate-700 transition text-slate-400">Tocar Puerta</button>
+            <button @click="cambiarVista('palabra_pase')" class="px-2 py-1 bg-slate-900 border border-slate-800 rounded hover:border-slate-700 transition text-slate-400">Palabra de Pase</button>
+            <button @click="cambiarVista('umbral')" class="px-2 py-1 bg-slate-900 border border-slate-800 rounded hover:border-slate-700 transition text-slate-400">Umbral</button>
+        </div>
+
+        <!-- 📜 PIE DE PÁGINA SOLEMNE -->
+        <footer class="bg-slate-950 border-t border-slate-900/60 py-6 text-center">
+            <div class="container mx-auto px-4 max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] uppercase tracking-widest text-slate-600">
+                <p>© 2026 Proyecto Lapis — Todos los derechos reservados.</p>
+                <p class="font-serif italic text-slate-500/80">"Es con el mazo y el cincel que labramos nuestra propia historia."</p>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- =========================================================================
+         🔌 DEPENDENCIAS Y LÓGICA INTEGRADA MODIFICADA
+         ========================================================================= -->
+    
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script>
+        window.VistasProyectoLapis = {
+            tocar_puerta: `
+                <div class="space-y-6 max-w-2xl mx-auto">
+                    <div class="flex items-center justify-between border-b border-slate-900 pb-4">
+                        <div>
+                            <h2 class="font-serif text-xl font-bold text-slate-100">Tocar la Puerta del Taller</h2>
+                            <p class="text-[10px] uppercase tracking-widest text-slate-500">Solicitud Formal de Contacto e Ingreso</p>
+                        </div>
+                        <button @click="cambiarVista('pasos_perdidos')" class="text-xs text-slate-400 hover:text-amber-500 transition">✕ Cerrar</button>
+                    </div>
+                    <form @submit.prevent="enviarContacto()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-xl space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Nombre Y Apellido</label>
+                                <input type="text" x-model="contactoDatos.nombre" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Cédula de Identidad</label>
+                                <input type="text" x-model="contactoDatos.cedula" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Correo Electrónico</label>
+                                <input type="email" x-model="contactoDatos.correo" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Teléfono</label>
+                                <input type="tel" x-model="contactoDatos.telefono" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Profesión</label>
+                                <input type="text" x-model="contactoDatos.profesion" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Redes Sociales</label>
+                                <input type="text" x-model="contactoDatos.redes" placeholder="@usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-slate-400 font-medium">Dirección de Habitación</label>
+                            <input type="text" x-model="contactoDatos.direccion" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-slate-400 font-medium">Motivo de la Solicitud</label>
+                            <textarea x-model="contactoDatos.mensaje" rows="4" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition resize-none" placeholder="Expresa detalladamente aquí los motivos..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-3 rounded-lg text-xs transition shadow-lg">
+                            🏛️ Presentar Toque en la Puerta del Taller
+                        </button>
+                    </form>
+                </div>
+            `,
+            palabra_pase: `
+                <div class="max-w-xl mx-auto space-y-6">
+                    <div class="flex items-center justify-between border-b border-slate-900 pb-4">
+                        <div>
+                            <h2 class="font-serif text-xl font-bold text-slate-100">Palabra de Pase</h2>
+                            <p class="text-[10px] uppercase tracking-widest text-slate-500">Registro de Nuevo Miembro Autorizado</p>
+                        </div>
+                        <button @click="cambiarVista('pasos_perdidos')" class="text-xs text-slate-400 hover:text-amber-500 transition">✕ Cancelar</button>
+                    </div>
+                    <form @submit.prevent="registrarUsuario()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-xl space-y-4 shadow-xl">
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-slate-400 font-medium tracking-wider">Código de Autorización</label>
+                            <input type="text" x-model="registroDatos.codigo_pase" placeholder="LAPIS-XXXX" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-amber-400 font-mono text-center tracking-widest focus:outline-none focus:border-amber-500 transition">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-slate-400 font-medium">Nombre de Usuario</label>
+                            <input type="text" x-model="registroDatos.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Contraseña</label>
+                                <input type="password" x-model="registroDatos.password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Confirmar Contraseña</label>
+                                <input type="password" x-model="registroDatos.password_confirm" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-900 space-y-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Tu Respuesta Oculta (Película Favorita)</label>
+                                <input type="text" x-model="registroDatos.respuesta_secreta" required placeholder="Escribe tu respuesta aquí" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-slate-100 hover:bg-white text-slate-950 font-bold uppercase tracking-widest py-3 rounded-lg text-xs transition shadow-lg mt-2">
+                            Consagrar Registro y Cuenta
+                        </button>
+                    </form>
+                </div>
+            `,
+            umbral: `
+                <div>
+                    <!-- SI LA SESIÓN NO ESTÁ ACTIVA: MUESTRA EL LOGIN -->
+                    <template x-if="!sesionActiva">
+                        <div class="max-w-sm mx-auto space-y-6 py-4">
+                            <div class="text-center space-y-3 flex flex-col items-center">
+                                <img src="frontend/logo.png" alt="Emblema del Taller" class="w-24 h-24 object-contain filter drop-shadow-lg hover:scale-105 transition-transform">
+                                <div>
+                                    <h2 class="font-serif text-2xl font-bold text-slate-100">El Umbral</h2>
+                                    <p class="text-[10px] uppercase tracking-widest text-slate-500">Identificación Oficial y Apertura de Trabajos</p>
+                                </div>
+                            </div>
+                            <form @submit.prevent="iniciarSesion()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-2xl space-y-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">Identidad / Usuario</label>
+                                    <input type="text" x-model="credenciales.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] uppercase text-slate-400 font-medium">Palabra Clave</label>
+                                    <input type="password" x-model="credenciales.password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                </div>
+                                <div class="text-right">
+                                    <button type="button" @click="cambiarVista('recuperar_password')" class="text-[11px] text-amber-500/80 hover:text-amber-400 underline transition">
+                                        ¿Olvidaste tu contraseña?
+                                    </button>
+                                </div>
+                                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-2.5 rounded-lg text-xs transition">
+                                    Ingresar al Taller 📐
+                                </button>
+                            </form>
+                            
+                        </div>
+                    </template>
+
+                    <!-- SI LA SESIÓN ESTÁ ACTIVA: SECCIÓN DEL CONTENIDO PERSONALIZADO DEL UMBRAL -->
+                    <template x-if="sesionActiva">
+                        <div class="space-y-8 py-4">
+                            <div class="border-b border-slate-900 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                <div>
+                                    <h2 class="font-serif text-2xl font-bold text-slate-100">Trabajos del Umbral</h2>
+                                    <p class="text-[10px] uppercase tracking-widest text-slate-400" x-text="'Cámara de: ' + usuarioLogueado.nombre + ' (' + usuarioLogueado.rol_etiqueta + ')'"></p>
+                                </div>
+                                <button @click="abrirEditor('nuevo_trazado')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-widest px-3 py-2 rounded-lg transition shadow-lg">
+                                    ✍️ Publicar Trazado
+                                </button>
+                            </div>
+
+                            <div class="space-y-8">
+                                
+                                <!-- CONTENIDO INFORMATIVO: PASOS PERDIDOS INTERNO -->
+                                <div class="space-y-4">
+                                    <div class="flex items-center space-x-2 border-b border-slate-900 pb-2">
+                                        <span class="text-base">🏛️</span>
+                                        <h3 class="font-serif text-base font-bold text-amber-400 uppercase tracking-wider">Contenido Informativo (Pasos Perdidos)</h3>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                        <template x-for="(item, index) in tarjetasReactivas.masoneria" :key="'umb-mas-'+index">
+                                            <div @click="trazadoSeleccionado = item" class="bg-slate-900/60 border border-slate-800 p-4 rounded-lg relative group/card cursor-pointer hover:border-amber-500/40 transition">
+                                                <span class="text-[9px] uppercase font-mono text-amber-500/70 block mb-1">Categoría: Masonería</span>
+                                                <template x-if="item.imagen">
+                                                    <img :src="item.imagen" alt="Imagen Masonería" class="w-full h-28 object-cover rounded mb-2 border border-slate-800">
+                                                </template>
+                                                <h4 class="font-bold text-slate-200 uppercase mb-2 tracking-wide" x-text="item.titulo"></h4>
+                                                <p class="text-slate-400 leading-relaxed line-clamp-3" x-text="item.contenido"></p>
+                                                <template x-if="tienePermisoEdicionPasosPerdidos()">
+                                                    <button @click.stop="eliminarTarjeta('masoneria', index)" class="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 bg-red-950 text-red-400 border border-red-900/50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold transition hover:bg-red-900 hover:text-white">Eliminar</button>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template x-for="(item, index) in tarjetasReactivas.educacion" :key="'umb-edu-'+index">
+                                            <div @click="trazadoSeleccionado = item" class="bg-slate-900/60 border border-slate-800 p-4 rounded-lg relative group/card flex flex-col justify-between cursor-pointer hover:border-amber-500/40 transition">
+                                                <div>
+                                                    <span class="text-[9px] uppercase font-mono text-blue-400/70 block mb-1">Categoría: Educación</span>
+                                                    <template x-if="item.imagen">
+                                                        <img :src="item.imagen" alt="Imagen Educación" class="w-full h-28 object-cover rounded mb-2 border border-slate-800">
+                                                    </template>
+                                                    <h4 class="font-bold text-slate-200 uppercase mb-2 tracking-wide" x-text="item.titulo"></h4>
+                                                    <p class="text-slate-400 leading-relaxed line-clamp-3" x-text="item.contenido"></p>
+                                                </div>
+                                                <template x-if="item.enlace">
+                                                    <span class="text-amber-500/80 hover:text-amber-400 underline mt-2 block font-medium" x-text="item.textoEnlace"></span>
+                                                </template>
+                                                <template x-if="tienePermisoEdicionPasosPerdidos()">
+                                                    <button @click.stop="eliminarTarjeta('educacion', index)" class="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 bg-red-950 text-red-400 border border-red-900/50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold transition hover:bg-red-900 hover:text-white">Eliminar</button>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- SECCIÓN EXCLUSIVA DE TRAZADOS ARQUITECTÓNICOS -->
+                                <div class="space-y-4">
+                                    <div class="flex items-center space-x-2 border-b border-slate-900 pb-2">
+                                        <span class="text-base">✍️</span>
+                                        <h3 class="font-serif text-base font-bold text-amber-400 uppercase tracking-wider">Trazados Grabados en el Umbral</h3>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-4 text-xs">
+                                        <template x-for="(trazado, index) in trazadosFiltrados" :key="'traz-'+index">
+                                            <div @click="trazadoSeleccionado = trazado" class="bg-slate-950/60 border border-slate-900 p-5 rounded-xl space-y-2 relative cursor-pointer hover:border-amber-500/40 transition group/trazado shadow-md hover:shadow-xl">
+                                                <template x-if="trazado.imagen">
+                                                    <img :src="trazado.imagen" alt="Imagen Trazado" class="w-full h-40 object-cover rounded-lg mb-2 border border-slate-800">
+                                                </template>
+                                                <div class="flex justify-between items-center text-[10px] uppercase font-mono text-slate-500">
+                                                    <span x-text="'Autor: ' + trazado.autor"></span>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="opacity-0 group-hover/trazado:opacity-100 text-amber-400 text-[9px] uppercase font-bold transition tracking-wider">📖 Lectura Profunda</span>
+                                                        <span x-text="trazado.fecha"></span>
+                                                    </div>
+                                                </div>
+                                                <h4 class="font-serif text-sm font-bold text-slate-200 group-hover:text-amber-400 transition" x-text="trazado.titulo"></h4>
+                                                <p class="text-slate-400 leading-relaxed whitespace-pre-line line-clamp-3 group-hover:text-slate-300 transition" x-text="trazado.contenido"></p>
+                                                
+                                                <!-- BOTÓN DIRECTO DE ELIMINACIÓN EXCLUSIVO (VENERABLE / TRONO) -->
+                                                <template x-if="tienePermisoEliminarTrazados()">
+                                                    <button @click.stop="eliminarTrazado(trazado.idIndex)" class="mt-2 bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-900/60 px-2 py-1 rounded text-[9px] uppercase font-bold transition">
+                                                        🗑️ Eliminar Trazado
+                                                    </button>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template x-if="trazadosFiltrados.length === 0">
+                                            <p class="text-slate-500 italic text-center py-2">No hay trazados visibles para tu grado en este momento.</p>
+                                        </template>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            `,
+            recuperar_password: `
+                <div class="max-w-md mx-auto space-y-6">
+                    <div class="flex items-center justify-between border-b border-slate-900 pb-4">
+                        <div>
+                            <h2 class="font-serif text-xl font-bold text-slate-100">Restaurar Credenciales</h2>
+                            <p class="text-[10px] uppercase tracking-widest text-slate-500">Reemplazo Seguro de Palabra Clave</p>
+                        </div>
+                        <button @click="cambiarVista('umbral')" class="text-xs text-slate-400 hover:text-amber-500 transition">✕ Volver</button>
+                    </div>
+                    <form @submit.prevent="restablecerPassword()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-xl space-y-4 shadow-xl">
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-slate-400 font-medium">Ingresa tu Usuario</label>
+                            <input type="text" x-model="recuperarDatos.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-slate-400 font-medium">Tu Respuesta Archivada (Película Favorita)</label>
+                            <input type="text" x-model="recuperarDatos.respuesta_secreta" required placeholder="Verificar identidad" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                        </div>
+                        <div class="pt-2 border-t border-slate-900 space-y-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] uppercase text-slate-400 font-medium">Nueva Contraseña</label>
+                                <input type="password" x-model="recuperarDatos.nueva_password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-2.5 rounded-lg text-xs transition shadow-lg">
+                            Reemplazar Contraseña e Ir al Umbral
+                        </button>
+                    </form>
+                </div>
+            `,
+            admin: `
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-r from-slate-950 via-slate-950 to-amber-950/20 border border-slate-900 p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h2 class="font-serif text-xl font-bold text-slate-100" x-text="'Cámara Interna — ' + (usuarioLogueado?.nombre || 'Oficial')"></h2>
+                            <p class="text-[10px] uppercase tracking-widest text-slate-500" x-text="'Rol Activo: ' + usuarioLogueado?.rol_etiqueta"></p>
+                        </div>
+                    </div>
+
+                    <!-- 🎴 TARJETA DE USUARIOS REGISTRADOS -->
+                    <template x-if="['trono_supremo', 'venerable_maestro'].includes(usuarioLogueado?.rol)">
+                        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-xl">
+                            <div class="border-b border-slate-800 pb-2 flex items-center space-x-2">
+                                <span class="text-base">👥</span>
+                                <div>
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Cantera de Miembros Registrados</h3>
+                                    <p class="text-[10px] text-slate-400">Usa los selectores para marcar y cambiar el rol estructural de cada hermano de forma inmediata.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-800 text-[10px] uppercase text-slate-500 font-mono">
+                                            <th class="py-2 px-3">Hermano / Cuenta</th>
+                                            <th class="py-2 px-3">Rol Actual</th>
+                                            <th class="py-2 px-3 text-right">Asignar Nuevo Rol</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="(miembro, idx) in hermanosTaller" :key="idx">
+                                            <tr class="border-b border-slate-900/60 bg-slate-950/20 hover:bg-slate-950/60 transition">
+                                                <td class="py-3 px-3 font-medium text-slate-200" x-text="miembro.nombre"></td>
+                                                <td class="py-3 px-3">
+                                                    <span :class="{
+                                                        'bg-amber-500/10 text-amber-400 border-amber-500/30': miembro.rol === 'venerable_maestro',
+                                                        'bg-blue-500/10 text-blue-400 border-blue-500/20': ['primer_vigilante', 'segundo_vigilante'].includes(miembro.rol),
+                                                        'bg-slate-800 text-slate-400 border-slate-700': ['maestro', 'companero', 'aprendiz'].includes(miembro.rol)
+                                                    }" class="text-[9px] uppercase font-mono tracking-wider px-2 py-0.5 rounded border" x-text="miembro.rol.replace('_', ' ')"></span>
+                                                </td>
+                                                <td class="py-3 px-3 text-right">
+                                                    <template x-if="miembro.rol === 'venerable_maestro'">
+                                                        <div class="flex justify-end gap-1 items-center">
+                                                            <template x-if="usuarioLogueado?.rol === 'trono_supremo'">
+                                                                <button @click="removerVenerable(idx)" class="bg-red-950/60 hover:bg-red-900 text-red-400 border border-red-900/50 px-2 py-1 rounded text-[10px] font-bold uppercase transition">Quitar Trono</button>
+                                                            </template>
+                                                            <template x-if="usuarioLogueado?.rol !== 'trono_supremo'">
+                                                                <span class="text-[9px] text-slate-600 uppercase font-mono tracking-widest">Inviolable</span>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+
+                                                    <template x-if="miembro.rol !== 'venerable_maestro' && miembro.rol !== 'trono_supremo'">
+                                                        <div class="flex justify-end gap-1 items-center">
+                                                            <template x-if="usuarioLogueado?.rol === 'trono_supremo'">
+                                                                <button @click="ascenderAVenerable(idx)" class="bg-amber-500 text-slate-950 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase hover:bg-amber-400 transition mr-2">Hacer VM</button>
+                                                            </template>
+                                                            
+                                                            <select @change="cambiarRolHermano(idx, $event.target.value)" class="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-amber-500 font-medium">
+                                                                <option value="" selected disabled>Seleccionar Rol...</option>
+                                                                <option value="primer_vigilante">1er Vigilante</option>
+                                                                <option value="segundo_vigilante">2do Vigilante</option>
+                                                                <option value="maestro">Maestro</option>
+                                                                <option value="companero">Compañero</option>
+                                                                <option value="aprendiz">Aprendiz</option>
+                                                            </select>
+                                                        </div>
+                                                    </template>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 🗳️ SECCIÓN DE ENCUESTAS Y VOTACIONES (BALOTAJES) -->
+                    <template x-if="!['aprendiz', 'companero'].includes(usuarioLogueado?.rol)">
+                        <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-4">
+                            <div class="flex justify-between items-center border-b border-slate-900 pb-2">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">🗳️ Balotajes y Votaciones del Taller</h3>
+                                <template x-if="usuarioLogueado?.rol === 'venerable_maestro'">
+                                    <button @click="abrirEditor('nueva_encuesta')" class="bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-slate-950 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded transition border border-amber-500/30">
+                                        + Diseñar Balotaje
+                                    </button>
+                                </template>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <template x-for="(encuesta, index) in encuestas" :key="index">
+                                    <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl space-y-3 flex flex-col justify-between relative group/voto">
+                                        <div>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="text-[9px] uppercase font-mono tracking-wider bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20" x-text="encuesta.categoria"></span>
+                                                <span class="text-[10px] text-slate-500 font-medium" x-text="'Total: ' + (encuesta.favor + encuesta.contra) + ' votos'"></span>
+                                            </div>
+                                            <h4 class="text-xs font-bold text-slate-200 leading-snug" x-text="encuesta.pregunta"></h4>
+                                        </div>
+
+                                        <div class="space-y-1.5 pt-2">
+                                            <div class="w-full bg-slate-950 h-2 rounded overflow-hidden flex border border-slate-900">
+                                                <div class="bg-emerald-500 transition-all duration-500" :style="'width: ' + calcularPorcentaje(encuesta.favor, encuesta.contra) + '%'"></div>
+                                                <div class="bg-red-500 transition-all duration-500" :style="'width: ' + (100 - calcularPorcentaje(encuesta.favor, encuesta.contra)) + '%'"></div>
+                                            </div>
+                                            <div class="flex justify-between text-[10px] font-mono text-slate-400">
+                                                <span class="text-emerald-400" x-text="'A favor: ' + encuesta.favor + ' (' + calcularPorcentaje(encuesta.favor, encuesta.contra) + '%)'"></span>
+                                                <span class="text-red-400" x-text="'En contra: ' + encuesta.contra + ' (' + (100 - calcularPorcentaje(encuesta.favor, encuesta.contra)) + '%)'"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex gap-2 pt-2 border-t border-slate-950">
+                                            <button @click="votar(index, 'favor')" class="flex-1 bg-emerald-950/40 hover:bg-emerald-900 border border-emerald-900/60 text-emerald-400 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition">👍 A Favor</button>
+                                            <button @click="votar(index, 'contra')" class="flex-1 bg-red-950/40 hover:bg-red-900 border border-red-900/60 text-red-400 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition">👎 En Contra</button>
+                                        </div>
+
+                                        <template x-if="usuarioLogueado?.rol === 'venerable_maestro'">
+                                            <button @click="eliminarEncuesta(index)" class="absolute -top-1 -right-1 opacity-0 group-hover/voto:opacity-100 bg-red-950 text-red-400 border border-red-900/40 px-1 py-0.5 rounded text-[8px] font-bold uppercase transition hover:bg-red-950">Eliminar</button>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 🚪 CONSOLA DE TOQUES DE PUERTA -->
+                    <template x-if="['venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
+                        <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-3">
+                            <div class="border-b border-slate-900 pb-2">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">🚪 Solicitudes Pendientes (Toques de Puerta)</h3>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-800 text-[10px] uppercase text-slate-500 font-mono">
+                                            <th class="py-2 px-3">Nombre / Cédula</th>
+                                            <th class="py-2 px-3">Contacto / Correo</th>
+                                            <th class="py-2 px-3">Motivo / Mensaje</th>
+                                            <th class="py-2 px-3 text-right">Acción Autorizada</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="(solicitud, index) in toquesDePuerta" :key="index">
+                                            <tr class="border-b border-slate-900 bg-slate-900/20 hover:bg-slate-900/40 transition">
+                                                <td class="py-3 px-3">
+                                                    <div class="font-bold text-slate-200" x-text="solicitud.nombre"></div>
+                                                    <div class="text-[10px] text-slate-500 font-mono" x-text="solicitud.cedula"></div>
+                                                </td>
+                                                <td class="py-3 px-3 text-slate-400">
+                                                    <div x-text="solicitud.correo"></div>
+                                                    <div class="text-[10px]" x-text="solicitud.telefono"></div>
+                                                </td>
+                                                <td class="py-3 px-3 text-slate-400 max-w-xs truncate" :title="solicitud.mensaje" x-text="solicitud.mensaje"></td>
+                                                <td class="py-3 px-3 text-right">
+                                                    <template x-if="solicitud.estado === 'pendiente'">
+                                                        <button @click="aprobarSolicitud(index)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded transition shadow-md">
+                                                            ⚒️ Labrar Código
+                                                        </button>
+                                                    </template>
+                                                    <template x-if="solicitud.estado === 'aprobado'">
+                                                        <span class="text-[10px] font-mono uppercase tracking-wider bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20" x-text="'Aprobado: ' + solicitud.codigo_generado"></span>
+                                                    </template>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 💬 CHAT SELECTIVO MULTIGRADO INTEGRADO -->
+                    <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-4">
+                        <div class="border-b border-slate-900 pb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Canal de Comunicación Multigrado</h3>
+                        </div>
+                        
+                        <template x-if="['venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
+                            <div class="space-y-3">
+                                <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800 text-xs h-40 overflow-y-auto space-y-2">
+                                    <template x-for="msg in historialChat">
+                                        <div>
+                                            <span :class="{
+                                                'text-amber-500': msg.rol === 'venerable_maestro', 
+                                                'text-blue-400': msg.rol === 'primer_vigilante',
+                                                'text-emerald-400': msg.rol === 'segundo_vigilante'
+                                            }" class="font-bold" x-text="msg.autor"></span> 
+                                            <span class="text-slate-200" x-text="msg.texto"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" x-model="nuevoMensajeTexto" @keydown.enter="enviarMensajeChat()" :placeholder="'Escribir como ' + usuarioLogueado.nombre + '...'" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                    <button @click="enviarMensajeChat()" class="bg-amber-500 text-slate-950 text-xs font-bold px-4 py-1.5 rounded-lg hover:bg-amber-400 transition">Enviar</button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="!['venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
+                            <div class="p-4 bg-red-950/20 border border-red-900/40 rounded-lg text-center">
+                                <p class="text-xs text-red-400 font-serif italic">"El canal se encuentra en silencio. Silencio y reserva tradicionales de tu Columna."</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            `
+        };
+
+        // =========================================================================
+        // 🔌 MÓDULO ADAPTADOR DE CONEXIÓN FRONTEND (API/FETCH CONNECTION LAYER)
+        // =========================================================================
+        const apiConnection = {
+            baseUrl: '/api',
+            
+            async request(endpoint, options = {}) {
+                const defaultHeaders = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+                
+                const config = {
+                    ...options,
+                    headers: {
+                        ...defaultHeaders,
+                        ...options.headers
+                    }
+                };
+
+                try {
+                    const response = await fetch(`${this.baseUrl}${endpoint}`, config);
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    console.warn(`[Lapis Connection Layer] Endpoint no alcanzable (${endpoint}). Operando en modo local/reactivo.`);
+                    return null;
+                }
+            },
+
+            async get(endpoint) {
+                return await this.request(endpoint, { method: 'GET' });
+            },
+
+            async post(endpoint, body) {
+                return await this.request(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+            },
+
+            async put(endpoint, body) {
+                return await this.request(endpoint, {
+                    method: 'PUT',
+                    body: JSON.stringify(body)
+                });
+            },
+
+            async delete(endpoint) {
+                return await this.request(endpoint, { method: 'DELETE' });
+            }
+        };
+
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('appLapis', () => ({
+                vistaActual: 'pasos_perdidos',
+                sesionActiva: false,
+                usuarioLogueado: null,
+                
+                modalAbierto: false,
+                seccionDestino: '',
+                
+                trazadoSeleccionado: null,
+                
+                nuevaTarjeta: { titulo: '', contenido: '', categoriaDestino: 'masoneria', enlace: '', textoEnlace: '', imagen: '' },
+                nuevaEncuestaDatos: { pregunta: '', categoria: '' },
+                nuevoTrazadoDatos: { titulo: '', contenido: '', imagen: '' },
+
+                nuevoMensajeTexto: '',
+                historialChat: [
+                    { autor: '[Venerable Maestro]:', rol: 'venerable_maestro', texto: 'Trazado de trabajos listo para la sesión.' },
+                    { autor: '[Primer Vigilante]:', rol: 'primer_vigilante', texto: 'Columnas alíneadas, todo en orden.' },
+                    { autor: '[Segundo Vigilante]:', rol: 'segundo_vigilante', texto: 'Verificando el ingreso en el Umbral.' }
+                ],
+
+                hermanosTaller: [
+                    { nombre: 'Hermano Venerable Activo', rol: 'venerable_maestro' },
+                    { nombre: 'Hermano Primer Vigilante', rol: 'primer_vigilante' },
+                    { nombre: 'Hermano Segundo Vigilante', rol: 'segundo_vigilante' },
+                    { nombre: 'Hermano Maestro 1', rol: 'maestro' },
+                    { nombre: 'Hermano Compañero 1', rol: 'companero' },
+                    { nombre: 'Hermano Aprendiz 1', rol: 'aprendiz' }
+                ],
+
+                trazados: [
+                    { titulo: 'La Rectitud de la Plomada', contenido: 'Breve reflexión sobre el equilibrio moral que todo Maestro debe infundir en los valles del taller.', autor: 'Hermano Maestro 1', gradoMinimo: 'maestro', fecha: '17 Jul 2026', imagen: '' }
+                ],
+
+                encuestas: [
+                    { pregunta: '¿Se aprueba el presupuesto extraordinario para la remodelación de la fachada de la Logia?', categoria: 'Finanzas', favor: 12, contra: 3 },
+                    { pregunta: '¿Autorizar el cambio de fecha de los trabajos solemnes de fin de mes para el sábado subsiguiente?', categoria: 'Logística', favor: 8, contra: 8 }
+                ],
+
+                toquesDePuerta: [
+                    { nombre: 'Carlos Mendoza', cedula: 'V-14.340.112', correo: 'carlos.m@mail.com', telefono: '0412-5551234', mensaje: 'Deseo ingresar para expandir mi formación ética y colaborar con las obras filantrópicas.', estado: 'pendiente', codigo_generado: '' },
+                    { nombre: 'Andrés Gil', cedula: 'V-18.990.453', correo: 'andres_g@mail.com', telefono: '0424-7778899', mensaje: 'Interesado en el estudio profundo de las corrientes de pensamiento filosóficas clásicas.', estado: 'pendiente', codigo_generado: '' }
+                ],
+
+                tarjetasReactivas: {
+                    masoneria: [
+                        { titulo: '¿Qué es la Masonería?', contenido: 'Una institución filosófica, filantrópica y progresista que busca el perfeccionamiento moral e intelectual de la humanidad a través del estudio de las ciencias y las artes.', imagen: '' },
+                        { titulo: 'Mitos y Realidades', contenido: 'Lejos de los secretos conspirativos del imaginario popular, la orden opera como una escuela de ciudadanía y fraternidad abierta al libre pensamiento respetuoso.', imagen: '' }
+                    ],
+                    educacion: [
+                        { titulo: 'Biblioteca Digital', contenido: 'Acceso a textos clásicos de filosofía universal y simbolismo.', enlace: '#', textoEnlace: 'Explorar tomos →', imagen: '' },
+                        { titulo: 'Cátedra Masónica', contenido: 'Ciclos de conferencias abiertas sobre historia y ética.', enlace: '#', textoEnlace: 'Ver cronograma →', imagen: '' },
+                        { titulo: '¿Sabías qué?', contenido: 'Grandes próceres civiles e inventores históricos trazaron sus planos bajo nuestras escuadras.', enlace: '', textoEnlace: '', imagen: '' },
+                        { titulo: 'Efemérides', contenido: 'Conmemoración del solsticio y hitos históricos de nuestra orden en la república.', enlace: '', textoEnlace: '', imagen: '' }
+                    ],
+                    noticias: [
+                        { titulo: 'Hoy', contenido: '🧪 Ciencia: Avances en astrofísica', imagen: '' },
+                        { titulo: 'Ayer', contenido: '💻 Tecnología: El impacto ético de la IA', imagen: '' },
+                        { titulo: '14 Jul', contenido: '⚽ Deporte: Valores e integración juvenil', imagen: '' }
+                    ],
+                    filantropia: [
+                        { titulo: 'Agosto 2026', contenido: 'Próximo evento: Jornada de donación escolar y apoyo médico comunitario.', imagen: '' }
+                    ]
+                },
+                
+                contactoDatos: { nombre: '', cedula: '', correo: '', telefono: '', profesion: '', redes: '', direccion: '', mensaje: '' },
+                registroDatos: { usuario: '', password: '', password_confirm: '', codigo_pase: '', respuesta_secreta: '' },
+                credenciales: { usuario: '', password: '' },
+                recuperarDatos: { usuario: '', respuesta_secreta: '', nueva_password: '' },
+
+                async init() {
+                    const datosIniciales = await apiConnection.get('/estado-inicial');
+                    if (datosIniciales) {
+                        if (datosIniciales.tarjetasReactivas) this.tarjetasReactivas = datosIniciales.tarjetasReactivas;
+                        if (datosIniciales.trazados) this.trazados = datosIniciales.trazados;
+                        if (datosIniciales.encuestas) this.encuestas = datosIniciales.encuestas;
+                        if (datosIniciales.hermanosTaller) this.hermanosTaller = datosIniciales.hermanosTaller;
+                    }
+                },
+
+                get trazadosFiltrados() {
+                    if (!this.usuarioLogueado) return [];
+                    const rol = this.usuarioLogueado.columna || this.usuarioLogueado.rol;
+
+                    return this.trazados.map((item, index) => ({ ...item, idIndex: index })).filter(trazado => {
+                        const grado = trazado.gradoMinimo || 'maestro';
+                        if (grado === 'aprendiz') {
+                            return true;
+                        }
+                        if (grado === 'companero') {
+                            return ['companero', 'maestro', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante', 'trono_supremo'].includes(rol);
+                        }
+                        if (grado === 'maestro') {
+                            return ['maestro', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante', 'trono_supremo'].includes(rol);
+                        }
+                        return true;
+                    });
+                },
+
+                cambiarVista(nuevaVista) {
+                    this.vistaActual = nuevaVista;
+                },
+                
+                tienePermisoEdicionPasosPerdidos() {
+                    if (!this.sesionActiva || !this.usuarioLogueado) return false;
+                    return ['trono_supremo', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(this.usuarioLogueado.rol);
+                },
+
+                /* REGLA EXCLUSIVA SOLICITADA: Sólo el Venerable Maestro y el Trono del Venerable (Webmaster) pueden eliminar trazados */
+                tienePermisoEliminarTrazados() {
+                    if (!this.sesionActiva || !this.usuarioLogueado) return false;
+                    return ['venerable_maestro', 'trono_supremo'].includes(this.usuarioLogueado.rol);
+                },
+
+                abrirEditor(seccion) {
+                    this.seccionDestino = seccion;
+                    if (seccion === 'nueva_encuesta') {
+                        this.nuevaEncuestaDatos = { pregunta: '', categoria: '' };
+                    } else if (seccion === 'nuevo_trazado') {
+                        this.nuevoTrazadoDatos = { titulo: '', contenido: '', imagen: '' };
+                    } else if (seccion === 'pasos_perdidos') {
+                        this.nuevaTarjeta = { titulo: '', contenido: '', categoriaDestino: 'masoneria', enlace: '', textoEnlace: '', imagen: '' };
+                    }
+                    this.modalAbierto = true;
+                },
+
+                async procesarInyeccion() {
+                    if (this.seccionDestino === 'nueva_encuesta') {
+                        await this.guardarNuevaEncuesta();
+                    } else if (this.seccionDestino === 'nuevo_trazado') {
+                        await this.guardarNuevoTrazado();
+                    } else if (this.seccionDestino === 'pasos_perdidos') {
+                        await this.guardarNuevaTarjetaDinamica();
+                    }
+                },
+
+                async guardarNuevaTarjetaDinamica() {
+                    if(!this.nuevaTarjeta.titulo || !this.nuevaTarjeta.contenido) return;
+                    
+                    const catDestino = this.nuevaTarjeta.categoriaDestino; 
+                    const payload = {
+                        titulo: this.nuevaTarjeta.titulo,
+                        contenido: this.nuevaTarjeta.contenido,
+                        enlace: this.nuevaTarjeta.enlace || '',
+                        textoEnlace: this.nuevaTarjeta.textoEnlace || '',
+                        imagen: this.nuevaTarjeta.imagen || ''
+                    };
+                    
+                    await apiConnection.post(`/pasos-perdidos/${catDestino}`, payload);
+
+                    this.tarjetasReactivas[catDestino].push(payload);
+                    this.modalAbierto = false;
+                },
+
+                async eliminarTarjeta(seccion, index) {
+                    await apiConnection.delete(`/pasos-perdidos/${seccion}/${index}`);
+                    this.tarjetasReactivas[seccion].splice(index, 1);
+                },
+
+                async guardarNuevoTrazado() {
+                    if (!this.nuevoTrazadoDatos.titulo || !this.nuevoTrazadoDatos.contenido) return;
+                    const hoy = new Date();
+                    const opciones = { day: 'numeric', month: 'short', year: 'numeric' };
+                    
+                    let gradoAutor = this.usuarioLogueado.columna || this.usuarioLogueado.rol;
+                    if (['venerable_maestro', 'primer_vigilante', 'segundo_vigilante', 'trono_supremo'].includes(gradoAutor)) {
+                        gradoAutor = 'maestro';
+                    }
+
+                    const nuevoTrazado = {
+                        titulo: this.nuevoTrazadoDatos.titulo,
+                        contenido: this.nuevoTrazadoDatos.contenido,
+                        imagen: this.nuevoTrazadoDatos.imagen || '',
+                        autor: this.usuarioLogueado.nombre,
+                        gradoMinimo: gradoAutor,
+                        fecha: hoy.toLocaleDateString('es-ES', opciones)
+                    };
+
+                    await apiConnection.post('/trazados', nuevoTrazado);
+
+                    this.trazados.unshift(nuevoTrazado);
+                    this.modalAbierto = false;
+                    alert('Trazado publicado exitosamente en el Umbral.');
+                },
+
+                /* FUNCIÓN DE ELIMINACIÓN DE TRAZADOS RESTRINGIDA A VENERABLE / TRONO */
+                async eliminarTrazado(index) {
+                    if (!this.tienePermisoEliminarTrazados()) {
+                        alert('No tienes los permisos requeridos para eliminar este trazado.');
+                        return;
+                    }
+                    if (confirm('¿Deseas eliminar este trazado permanentemente?')) {
+                        await apiConnection.delete(`/trazados/${index}`);
+                        this.trazados.splice(index, 1);
+                        this.trazadoSeleccionado = null;
+                        alert('El trazado ha sido removido del Umbral.');
+                    }
+                },
+
+                async guardarNuevaEncuesta() {
+                    if (!this.nuevaEncuestaDatos.pregunta || !this.nuevaEncuestaDatos.categoria) return;
+                    const nuevaEncuesta = {
+                        pregunta: this.nuevaEncuestaDatos.pregunta,
+                        categoria: this.nuevaEncuestaDatos.categoria,
+                        favor: 0,
+                        contra: 0
+                    };
+
+                    await apiConnection.post('/encuestas', nuevaEncuesta);
+
+                    this.encuestas.push(nuevaEncuesta);
+                    this.modalAbierto = false;
+                },
+
+                async eliminarEncuesta(index) {
+                    await apiConnection.delete(`/encuestas/${index}`);
+                    this.encuestas.splice(index, 1);
+                },
+
+                async votar(index, tipo) {
+                    if (tipo === 'favor') this.encuestas[index].favor++;
+                    if (tipo === 'contra') this.encuestas[index].contra++;
+                    
+                    await apiConnection.post(`/encuestas/${index}/voto`, { tipo });
+                },
+
+                calcularPorcentaje(favor, contra) {
+                    const total = favor + contra;
+                    if (total === 0) return 50;
+                    return Math.round((favor / total) * 100);
+                },
+
+                async ascenderAVenerable(idx) {
+                    if (this.usuarioLogueado?.rol !== 'trono_supremo') return;
+                    this.hermanosTaller[idx].rol = 'venerable_maestro';
+                    await apiConnection.put(`/hermanos/${idx}/rol`, { rol: 'venerable_maestro' });
+                    alert('Grado otorgado. El usuario ahora ostenta el rol de Venerable Maestro.');
+                },
+
+                async removerVenerable(idx) {
+                    if (this.usuarioLogueado?.rol !== 'trono_supremo') return;
+                    this.hermanosTaller[idx].rol = 'maestro';
+                    await apiConnection.put(`/hermanos/${idx}/rol`, { rol: 'maestro' });
+                    alert('El rol de Venerable Maestro ha sido revocado.');
+                },
+
+                async cambiarRolHermano(idx, nuevoRol) {
+                    if (!['venerable_maestro', 'trono_supremo'].includes(this.usuarioLogueado?.rol)) {
+                        alert('No posees la jerarquía requerida para moldear este rol.');
+                        return;
+                    }
+                    this.hermanosTaller[idx].rol = nuevoRol;
+                    await apiConnection.put(`/hermanos/${idx}/rol`, { rol: nuevoRol });
+                    alert('Rol actualizado exitosamente a: ' + nuevoRol.replace('_', ' '));
+                },
+
+                async aprobarSolicitud(index) {
+                    const codigo = 'LAPIS-' + Math.floor(1000 + Math.random() * 9000);
+                    this.toquesDePuerta[index].estado = 'aprobado';
+                    this.toquesDePuerta[index].codigo_generado = codigo;
+
+                    await apiConnection.post(`/solicitudes/${index}/aprobar`, { codigo });
+                    alert('Código de acceso generado: ' + codigo);
+                },
+
+                async enviarMensajeChat() {
+                    if (this.nuevoMensajeTexto.trim() === '') return;
+                    const mensaje = {
+                        autor: '[' + this.usuarioLogueado.nombre + ']:',
+                        rol: this.usuarioLogueado.rol,
+                        texto: this.nuevoMensajeTexto
+                    };
+
+                    await apiConnection.post('/chat', mensaje);
+
+                    this.historialChat.push(mensaje);
+                    this.nuevoMensajeTexto = '';
+                },
+
+                async iniciarSesion() {
+                    const u = this.credenciales.usuario.toLowerCase();
+                    const p = this.credenciales.password;
+
+                    const respuestaApi = await apiConnection.post('/auth/login', { usuario: u, password: p });
+                    
+                    if (respuestaApi && respuestaApi.exito) {
+                        this.usuarioLogueado = respuestaApi.usuario;
+                        this.sesionActiva = true;
+                        this.cambiarVista(respuestaApi.vistaInicial || 'umbral');
+                        return;
+                    }
+
+                    if (u === 'trono' && p === 'webmaster') {
+                        this.usuarioLogueado = { nombre: 'Webmaster Supremo', rol: 'trono_supremo', rol_etiqueta: 'Rol Supremo (Webmaster)' };
+                        this.sesionActiva = true;
+                        this.cambiarVista('admin');
+                        return;
+                    }
+
+                    if (p === 'lapis123') {
+                        if (u === 'venerable') {
+                            this.usuarioLogueado = { nombre: 'Venerable Maestro', rol: 'venerable_maestro', rol_etiqueta: 'Venerable Maestro Activo' };
+                            this.sesionActiva = true;
+                            this.cambiarVista('umbral');
+                            return;
+                        } else if (u === 'vigilante1') {
+                            this.usuarioLogueado = { nombre: 'Primer Vigilante', rol: 'primer_vigilante', rol_etiqueta: 'Primer Vigilante' };
+                            this.sesionActiva = true;
+                            this.cambiarVista('umbral');
+                            return;
+                        } else if (u === 'maestro1') {
+                            this.usuarioLogueado = { nombre: 'Hermano Maestro 1', rol: 'maestro', rol_etiqueta: 'Maestro Mason' };
+                            this.sesionActiva = true;
+                            this.cambiarVista('umbral');
+                            return;
+                        } else if (u === 'aprendiz1') {
+                            this.usuarioLogueado = { nombre: 'Hermano Aprendiz', rol: 'aprendiz', rol_etiqueta: 'Aprendiz' };
+                            this.sesionActiva = true;
+                            this.cambiarVista('umbral');
+                            return;
+                        }
+                    }
+                    alert('Credenciales incorrectas.');
+                },
+
+                async enviarContacto() {
+                    const nuevaSolicitud = {
+                        nombre: this.contactoDatos.nombre,
+                        cedula: this.contactoDatos.cedula,
+                        correo: this.contactoDatos.correo,
+                        telefono: this.contactoDatos.telefono,
+                        mensaje: this.contactoDatos.mensaje,
+                        estado: 'pendiente',
+                        codigo_generado: ''
+                    };
+
+                    await apiConnection.post('/solicitudes', nuevaSolicitud);
+
+                    this.toquesDePuerta.push(nuevaSolicitud);
+                    alert('Toque presentado.');
+                    this.contactoDatos = { nombre: '', cedula: '', correo: '', telefono: '', profesion: '', redes: '', direccion: '', mensaje: '' };
+                    this.cambiarVista('pasos_perdidos');
+                },
+
+                async registrarUsuario() {
+                    await apiConnection.post('/auth/registro', this.registroDatos);
+                    alert('Registro completado.');
+                    this.cambiarVista('umbral');
+                },
+
+                async restablecerPassword() {
+                    await apiConnection.post('/auth/restablecer', this.recuperarDatos);
+                    alert('Contraseña restaurada.');
+                    this.cambiarVista('umbral');
+                },
+
+                async cerrarSesion() {
+                    await apiConnection.post('/auth/logout', {});
+                    this.sesionActiva = false;
+                    this.usuarioLogueado = null;
+                    this.credenciales = { usuario: '', password: '' };
+                    this.cambiarVista('pasos_perdidos');
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

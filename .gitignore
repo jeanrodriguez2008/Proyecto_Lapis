@@ -1,0 +1,20 @@
+# Entorno virtual y Python
+.venv/
+env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos de base de datos local (SQLite)
+*.db
+lapis.db
+
+# Variables de entorno secretas (Claves de Neon Tech)
+.env
+
+# Archivos de sistema / editor
+.DS_Store
+.vscode/
+.idea/
