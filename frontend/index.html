@@ -748,7 +748,7 @@
                         <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-4">
                             <div class="flex justify-between items-center border-b border-slate-900 pb-2">
                                 <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">🗳️ Balotajes y Votaciones del Taller</h3>
-                                <template x-if="usuarioLogueado?.rol === 'venerable_maestro'">
+                                <template x-if="['trono_supremo', 'venerable_maestro'].includes(usuarioLogueado?.rol)">
                                     <button @click="abrirEditor('nueva_encuesta')" class="bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-slate-950 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded transition border border-amber-500/30">
                                         + Diseñar Balotaje
                                     </button>
@@ -782,7 +782,7 @@
                                             <button @click="votar(index, 'contra')" class="flex-1 bg-red-950/40 hover:bg-red-900 border border-red-900/60 text-red-400 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition">👎 En Contra</button>
                                         </div>
 
-                                        <template x-if="usuarioLogueado?.rol === 'venerable_maestro'">
+                                        <template x-if="['trono_supremo', 'venerable_maestro'].includes(usuarioLogueado?.rol)">
                                             <button @click="eliminarEncuesta(index)" class="absolute -top-1 -right-1 opacity-0 group-hover/voto:opacity-100 bg-red-950 text-red-400 border border-red-900/40 px-1 py-0.5 rounded text-[8px] font-bold uppercase transition hover:bg-red-950">Eliminar</button>
                                         </template>
                                     </div>
@@ -791,8 +791,8 @@
                         </div>
                     </template>
 
-                    <!-- 🚪 CONSOLA DE TOQUES DE PUERTA -->
-                    <template x-if="['venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
+                    <!-- 🚪 CONSOLA DE TOQUES DE PUERTA (SOLICITUDES PENDIENTES HABILITADAS PARA EL TRONO) -->
+                    <template x-if="['trono_supremo', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante', 'trono'].includes(usuarioLogueado?.rol)">
                         <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-3">
                             <div class="border-b border-slate-900 pb-2">
                                 <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">🚪 Solicitudes Pendientes (Toques de Puerta)</h3>
@@ -844,13 +844,13 @@
                             <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Canal de Comunicación Multigrado</h3>
                         </div>
                         
-                        <template x-if="['venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
+                        <template x-if="['trono_supremo', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
                             <div class="space-y-3">
                                 <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800 text-xs h-40 overflow-y-auto space-y-2">
                                     <template x-for="msg in historialChat">
                                         <div>
                                             <span :class="{
-                                                'text-amber-500': msg.rol === 'venerable_maestro', 
+                                                'text-amber-500': ['venerable_maestro', 'trono_supremo'].includes(msg.rol), 
                                                 'text-blue-400': msg.rol === 'primer_vigilante',
                                                 'text-emerald-400': msg.rol === 'segundo_vigilante'
                                             }" class="font-bold" x-text="msg.autor"></span> 
@@ -865,7 +865,7 @@
                             </div>
                         </template>
 
-                        <template x-if="!['venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
+                        <template x-if="!['trono_supremo', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
                             <div class="p-4 bg-red-950/20 border border-red-900/40 rounded-lg text-center">
                                 <p class="text-xs text-red-400 font-serif italic">"El canal se encuentra en silencio. Silencio y reserva tradicionales de tu Columna."</p>
                             </div>
@@ -970,6 +970,11 @@
                     { pregunta: '¿Autorizar el cambio de fecha de los trabajos solemnes de fin de mes para el sábado subsiguiente?', categoria: 'Logística', favor: 8, contra: 8 }
                 ],
 
+                // REGISTRO DE CÓDIGOS DE ACCESO VÁLIDOS VINCULADOS
+                pasesValidos: [
+                    { codigo: 'LAPIS-1000', usado: false }
+                ],
+
                 toquesDePuerta: [
                     { nombre: 'Carlos Mendoza', cedula: 'V-14.340.112', correo: 'carlos.m@mail.com', telefono: '0412-5551234', mensaje: 'Deseo ingresar para expandir mi formación ética y colaborar con las obras filantrópicas.', estado: 'pendiente', codigo_generado: '' },
                     { nombre: 'Andrés Gil', cedula: 'V-18.990.453', correo: 'andres_g@mail.com', telefono: '0424-7778899', mensaje: 'Interesado en el estudio profundo de las corrientes de pensamiento filosóficas clásicas.', estado: 'pendiente', codigo_generado: '' }
@@ -1008,6 +1013,7 @@
                         if (datosIniciales.trazados) this.trazados = datosIniciales.trazados;
                         if (datosIniciales.encuestas) this.encuestas = datosIniciales.encuestas;
                         if (datosIniciales.hermanosTaller) this.hermanosTaller = datosIniciales.hermanosTaller;
+                        if (datosIniciales.toquesDePuerta) this.toquesDePuerta = datosIniciales.toquesDePuerta;
                     }
                 },
 
@@ -1039,7 +1045,6 @@
                     return ['trono_supremo', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(this.usuarioLogueado.rol);
                 },
 
-                /* REGLA EXCLUSIVA SOLICITADA: Sólo el Venerable Maestro y el Trono del Venerable (Webmaster) pueden eliminar trazados */
                 tienePermisoEliminarTrazados() {
                     if (!this.sesionActiva || !this.usuarioLogueado) return false;
                     return ['venerable_maestro', 'trono_supremo'].includes(this.usuarioLogueado.rol);
@@ -1116,7 +1121,6 @@
                     alert('Trazado publicado exitosamente en el Umbral.');
                 },
 
-                /* FUNCIÓN DE ELIMINACIÓN DE TRAZADOS RESTRINGIDA A VENERABLE / TRONO */
                 async eliminarTrazado(index) {
                     if (!this.tienePermisoEliminarTrazados()) {
                         alert('No tienes los permisos requeridos para eliminar este trazado.');
@@ -1187,13 +1191,16 @@
                     alert('Rol actualizado exitosamente a: ' + nuevoRol.replace('_', ' '));
                 },
 
+                // LABRADO Y AUTORIZACIÓN DE PALABRA DE PASE EN PERFIL TRONO
                 async aprobarSolicitud(index) {
                     const codigo = 'LAPIS-' + Math.floor(1000 + Math.random() * 9000);
                     this.toquesDePuerta[index].estado = 'aprobado';
                     this.toquesDePuerta[index].codigo_generado = codigo;
 
+                    this.pasesValidos.push({ codigo: codigo, usado: false });
+
                     await apiConnection.post(`/solicitudes/${index}/aprobar`, { codigo });
-                    alert('Código de acceso generado: ' + codigo);
+                    alert('Código de acceso labrado y generado con éxito: ' + codigo + '\nAhora la persona solicitante puede registrarse en Palabra de Pase.');
                 },
 
                 async enviarMensajeChat() {
@@ -1270,14 +1277,35 @@
                     await apiConnection.post('/solicitudes', nuevaSolicitud);
 
                     this.toquesDePuerta.push(nuevaSolicitud);
-                    alert('Toque presentado.');
+                    alert('Toque de puerta presentado ante el Taller exitosamente.');
                     this.contactoDatos = { nombre: '', cedula: '', correo: '', telefono: '', profesion: '', redes: '', direccion: '', mensaje: '' };
                     this.cambiarVista('pasos_perdidos');
                 },
 
                 async registrarUsuario() {
+                    if (this.registroDatos.password !== this.registroDatos.password_confirm) {
+                        alert('Las contraseñas no coinciden.');
+                        return;
+                    }
+
+                    const paseEncontrado = this.pasesValidos.find(p => p.codigo === this.registroDatos.codigo_pase.toUpperCase() && !p.usado);
+                    
+                    if (!paseEncontrado) {
+                        alert('El código de autorización no existe o ya fue consumido.');
+                        return;
+                    }
+
+                    paseEncontrado.usado = true;
+
+                    const nuevoMiembro = {
+                        nombre: this.registroDatos.usuario,
+                        rol: 'aprendiz'
+                    };
+
+                    this.hermanosTaller.push(nuevoMiembro);
+
                     await apiConnection.post('/auth/registro', this.registroDatos);
-                    alert('Registro completado.');
+                    alert('Registro completado. Ahora puedes ingresar al Umbral.');
                     this.cambiarVista('umbral');
                 },
 
