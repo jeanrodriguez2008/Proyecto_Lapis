@@ -1,315 +1,261 @@
-// js/componentes.js
-// Catálogo de Vistas Estructuradas para el Proyecto Lapis
-
+// Catálogo de Componentes HTML - Proyecto Lapis
 window.VistasProyectoLapis = {
-    // =====================================================================
-    // 🏛️ CÁMARA 1: PASOS PERDIDOS (PORTAL PÚBLICO / BIENVENIDA)
-    // =====================================================================
-    pasos_perdidos: `
-        <div class="space-y-8 animate-fade-in">
-            <!-- Encabezado Principal Solemne -->
-            <div class="text-center max-w-2xl mx-auto space-y-3">
-                <span class="text-amber-500 font-serif tracking-widest text-xs uppercase block font-semibold">Bienvenido al Umbral Virtual</span>
-                <h2 class="font-serif text-3xl md:text-4xl font-bold tracking-tight text-slate-100">Sala de Pasos Perdidos</h2>
-                <div class="h-0.5 w-20 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto mt-4"></div>
-                <p class="text-slate-400 text-sm leading-relaxed pt-2">
-                    Este espacio precede a los trabajos del Taller. Desde aquí, los Obreros de la escuadra pueden interactuar con las herramientas digitales oficiales, actualizar su censo institucional o solicitar acceso a las columnas internas.
-                </p>
-            </div>
+  // 1. PASOS PERDIDOS (INICIO)
+  pasos_perdidos: `
+    <section class="text-center py-12 px-4 bg-slate-900 text-white rounded-2xl shadow-xl mb-12 border border-amber-500/30 relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <h1 class="text-4xl md:text-5xl font-extrabold text-amber-400 mb-4 tracking-tight">
+        Resp:. Logia Dignidad Humana N° 149
+      </h1>
+      <p class="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto font-light leading-relaxed mb-6">
+        Un espacio de reflexión, búsqueda de la verdad y construcción moral al servicio de la humanidad y el perfeccionamiento del espíritu.
+      </p>
 
-            <!-- Grilla de Acciones Principales -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                <!-- Tarjeta 1: Sistema de Censo -->
-                <div class="bg-slate-950/60 border border-slate-900 rounded-xl p-6 hover:border-amber-500/30 transition duration-300 group flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-2xl text-amber-500">📋</span>
-                            <span class="text-[9px] uppercase tracking-widest bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-bold">Obligatorio</span>
-                        </div>
-                        <h3 class="font-serif text-lg font-bold text-slate-200 group-hover:text-amber-400 transition mb-2">Censo Gremial 2026</h3>
-                        <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                            Si eres miembro activo de la Logia, es tu deber actualizar tu ficha de datos socio-profesionales para mantener la regularidad en los registros del archivo secreto.
-                        </p>
-                    </div>
-                    <button @click="cambiarVista('censo')" class="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition">
-                        Actualizar Ficha
-                    </button>
-                </div>
+      <div class="inline-flex items-center gap-3 bg-slate-800/80 px-4 py-2 rounded-full border border-amber-500/40 shadow-inner">
+        <span class="text-xs uppercase tracking-widest text-amber-400 font-semibold">Visitas al Taller:</span>
+        <span class="text-lg font-bold text-white font-mono" x-text="contadorVisitas">0</span>
+      </div>
+    </section>
 
-                <!-- Tarjeta 2: Consagración de Registro -->
-                <div class="bg-slate-950/60 border border-slate-900 rounded-xl p-6 hover:border-amber-500/30 transition duration-300 group flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-2xl text-amber-500">🔑</span>
-                            <span class="text-[9px] uppercase tracking-widest bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 font-bold">Invitados</span>
-                        </div>
-                        <h3 class="font-serif text-lg font-bold text-slate-200 group-hover:text-amber-400 transition mb-2">Registrar Credenciales</h3>
-                        <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                            ¿Has recibido un pase digital generado en las canteras? Utiliza tu código de autorización para consagrar tu usuario y clave privada de acceso al Taller.
-                        </p>
-                    </div>
-                    <button @click="cambiarVista('registro')" class="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition">
-                        Consagrar Cuenta
-                    </button>
-                </div>
-            </div>
-
-            <!-- Acordeón Informativo y Solemne (Preguntas Frecuentes) -->
-            <div x-data="{ abierto: null }" class="bg-slate-950/40 border border-slate-900 rounded-xl p-4 mt-6">
-                <h4 class="font-serif text-xs font-bold tracking-widest text-slate-400 uppercase mb-4 px-2">ℹ️ Protocolos de Información</h4>
-                
-                <!-- Ítem 1 -->
-                <div class="border-b border-slate-900 last:border-0">
-                    <button @click="abierto = (abierto === 1 ? null : 1)" class="w-full text-left py-3 px-2 flex justify-between items-center text-xs font-semibold text-slate-300 hover:text-amber-400 transition">
-                        <span>¿Quiénes pueden acceder al área interna del Taller?</span>
-                        <span x-text="abierto === 1 ? '−' : '+'" class="text-amber-500 text-sm"></span>
-                    </button>
-                    <div x-show="abierto === 1" x-collapse class="px-2 pb-3 text-slate-400 text-xs leading-relaxed">
-                        Solo los Hermanos debidamente registrados que posean un usuario activo y conozcan la palabra de pase vigente asignada a sus respectivas dignidades pueden trasponer el Umbral del Taller.
-                    </div>
-                </div>
-
-                <!-- Ítem 2 -->
-                <div class="border-b border-slate-900 last:border-0">
-                    <button @click="abierto = (abierto === 2 ? null : 2)" class="w-full text-left py-3 px-2 flex justify-between items-center text-xs font-semibold text-slate-300 hover:text-amber-400 transition">
-                        <span>¿Qué ocurre si mis datos del censo están desactualizados?</span>
-                        <span x-text="abierto === 2 ? '−' : '+'" class="text-amber-500 text-sm"></span>
-                    </button>
-                    <div x-show="abierto === 2" x-collapse class="px-2 pb-3 text-slate-400 text-xs leading-relaxed">
-                        La falta de información actualizada podría congelar temporalmente la emisión automática de tus pases de acceso digital, requiriendo validación física ante la secretaría del Taller.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Estadísticas e Información a Pie de Página -->
-            <div class="flex items-center justify-between border-t border-slate-900 pt-6 text-[10px] tracking-widest text-slate-500 uppercase">
-                <div>Estado de Red: <span class="text-emerald-500 font-bold">● Operativo</span></div>
-                <div>Visitas al Portal: <span x-text="contadorVisitas" class="text-slate-300 font-bold"></span></div>
-            </div>
+    <div class="grid md:grid-cols-3 gap-8 mb-12">
+      <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-amber-500 hover:shadow-lg transition-shadow">
+        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+          🏛️
         </div>
-    `,
+        <h3 class="text-xl font-bold text-slate-800 mb-2">Principios Fundamentales</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">
+          Cultivamos la fraternidad, la tolerancia, la libertad de pensamiento y la filantropía. Trabajamos para desbastar la piedra bruta en busca de la verdad.
+        </p>
+      </div>
 
-    // =====================================================================
-    // 📋 CÁMARA 2: FORMULARIO DE CENSO GREMIAL
-    // =====================================================================
-    censo: `
-        <div class="animate-fade-in space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-900 pb-4">
-                <div>
-                    <h2 class="font-serif text-xl font-bold text-slate-100">Ficha de Censo Anual</h2>
-                    <p class="text-[10px] uppercase tracking-widest text-slate-500">Actualización de Registros Históricos</p>
-                </div>
-                <button @click="cambiarVista('pasos_perdidos')" class="text-xs text-slate-400 hover:text-amber-500 transition">✕ Cancelar</button>
-            </div>
-
-            <form @submit.prevent="consignarPlanilla()" class="space-y-6">
-                <!-- Datos de Identidad -->
-                <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-900 space-y-4">
-                    <h3 class="text-[10px] font-bold tracking-widest uppercase text-amber-500">1. Identidad Personal y Gremial</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Nombre Completo</label>
-                            <input type="text" x-model="nuevoCenso.nombre" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Ej. Juan Pérez">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Cédula de Identidad</label>
-                            <input type="text" x-model="nuevoCenso.cedula" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Ej. 12345678">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Grado Actual</label>
-                            <select x-model="nuevoCenso.grado" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                                <option value="Aprendiz">Aprendiz</option>
-                                <option value="Compañero">Compañero</option>
-                                <option value="Maestro">Maestro</option>
-                                <option value="Past Master">Past Master</option>
-                            </select>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Profesión u Oficio Profano</label>
-                            <input type="text" x-model="nuevoCenso.profesion" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Ej. Ingeniero de Software">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Contacto y Ubicación -->
-                <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-900 space-y-4">
-                    <h3 class="text-[10px] font-bold tracking-widest uppercase text-amber-500">2. Canales de Comunicación</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Correo Electrónico</label>
-                            <input type="email" x-model="nuevoCenso.correo" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="hermano@correo.com">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Teléfono de Contacto</label>
-                            <input type="tel" x-model="nuevoCenso.telefono" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="+58 412-0000000">
-                        </div>
-                        <div class="sm:col-span-2 space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Dirección de Domicilio</label>
-                            <input type="text" x-model="nuevoCenso.direccion" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Ciudad, Estado, Municipio...">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cuestionario de Seguridad Masónica -->
-                <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-900 space-y-4">
-                    <h3 class="text-[10px] font-bold tracking-widest uppercase text-amber-500">3. Palabras de Reconocimiento y Seguridad</h3>
-                    <p class="text-[11px] text-slate-400 leading-relaxed italic">Contesta estas breves preguntas profanas que servirán para validar tu identidad en caso de pérdida de claves.</p>
-                    <div class="space-y-3">
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">¿Cuál fue el nombre de tu primera mascota?</label>
-                            <input type="text" x-model="nuevoCenso.pregunta_mascota" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">¿Cuál es tu película favorita de la infancia?</label>
-                            <input type="text" x-model="nuevoCenso.pregunta_pelicula" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Botón de Envío -->
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-3 rounded-xl text-xs shadow-lg shadow-amber-500/10 transition duration-300">
-                    🏛️ Tocar la Puerta del Archivo
-                </button>
-            </form>
+      <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-amber-500 hover:shadow-lg transition-shadow">
+        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+          📖
         </div>
-    `,
+        <h3 class="text-xl font-bold text-slate-800 mb-2">Docencia y Tradición</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">
+          Preservamos el simbolismo ritualista como vehículo pedagógico para transmitir enseñanzas morales y filosóficas universales a través de los grados.
+        </p>
+      </div>
 
-    // =====================================================================
-    // 🔑 CÁMARA 3: REGISTRO MEDIANTE CÓDIGO DE PASE
-    // =====================================================================
-    registro: `
-        <div class="animate-fade-in max-w-md mx-auto space-y-6 py-4">
-            <div class="text-center space-y-2">
-                <h2 class="font-serif text-2xl font-bold text-slate-100">Consagrar Nueva Cuenta</h2>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">Usa tu Código de Invitación Autorizado</p>
-                <div class="h-0.5 w-12 bg-amber-500 mx-auto mt-2"></div>
+      <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-amber-500 hover:shadow-lg transition-shadow">
+        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+          🤝
+        </div>
+        <h3 class="text-xl font-bold text-slate-800 mb-2">Acción Exterior</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">
+          Extendemos nuestra acción benéfica a la sociedad, promoviendo el progreso, la educación y el auxilio fraterno a quien lo necesite.
+        </p>
+      </div>
+    </div>
+
+    <section class="bg-slate-50 p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">Divulgación y Planchas Públicas</h2>
+          <p class="text-sm text-slate-500">Trazados abiertos al mundo profano</p>
+        </div>
+        <template x-if="tienePermisoEdicionPasosPerdidos()">
+          <button @click="abrirModalCrearTarjeta()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
+            <span>+</span> Nueva Plancha
+          </button>
+        </template>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <template x-for="tarjeta in tarjetasDinamicas" :key="tarjeta.id">
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative">
+            <h4 class="text-lg font-bold text-slate-800 mb-2" x-text="tarjeta.titulo"></h4>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-3" x-text="tarjeta.contenido"></p>
+            <div class="flex justify-between items-center text-xs text-slate-400">
+              <span x-text="tarjeta.autor"></span>
+              <span x-text="tarjeta.fecha"></span>
             </div>
+            <template x-if="tienePermisoEdicionPasosPerdidos()">
+              <button @click="eliminarTarjeta(tarjeta.id)" class="absolute top-4 right-4 text-red-500 hover:text-red-700 text-xs font-bold">
+                ✕
+              </button>
+            </template>
+          </div>
+        </template>
+      </div>
+    </section>
+  `,
 
-            <form @submit.prevent="registrarUsuario()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-2xl space-y-4 shadow-xl">
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Código de Pase Digital</label>
-                    <input type="text" x-model="registroDatos.codigo_pase" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-amber-400 font-mono font-bold uppercase text-center focus:outline-none focus:border-amber-500 tracking-widest transition" placeholder="LAPIS-XXXX">
-                </div>
-                
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Nombre Completo Institucional</label>
-                    <input type="text" x-model="registroDatos.nombre_real" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Q:. H:. Nombre Apellido">
-                </div>
+  // 2. TOCAR PUERTA (CONTACTO PROFANO)
+  tocar_puerta: `
+    <div class="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-md border border-slate-200">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">✊</div>
+        <h2 class="text-2xl font-bold text-slate-800">Tocar a la Puerta del Taller</h2>
+        <p class="text-slate-600 text-sm mt-1">Si deseas solicitar información o iniciar tu proceso de acercamiento, envíanos tu mensaje.</p>
+      </div>
+      <form @submit.prevent="enviarContacto()" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+          <input type="text" x-model="formContacto.nombre" placeholder="Ej: Juan Pérez" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm focus:ring-amber-500 focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+          <input type="email" x-model="formContacto.email" placeholder="ejemplo@correo.com" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm focus:ring-amber-500 focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Motivo / Mensaje</label>
+          <textarea x-model="formContacto.mensaje" rows="4" placeholder="Expresa tus inquietudes o motivos para contactar al Taller..." required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm focus:ring-amber-500 focus:border-amber-500"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-lg font-bold transition-colors shadow">
+          Enviar Solicitud
+        </button>
+      </form>
+    </div>
+  `,
 
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Nombre de Usuario Único</label>
-                    <input type="text" x-model="registroDatos.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="ej. hsecretario">
-                </div>
+  // 3. PALABRA DE PASE (REGISTRO CON CÓDIGO DEL TRONO)
+  palabra_pase: `
+    <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md border border-slate-200">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">🔑</div>
+        <h2 class="text-2xl font-bold text-slate-800">Palabra de Pase</h2>
+        <p class="text-slate-500 text-sm mt-1">Consagración de cuenta mediante el código otorgado por el Venerable Maestro o el Trono.</p>
+      </div>
+      <form @submit.prevent="consagrarCuenta()" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Código de Pase (Generado por el Trono)</label>
+          <input type="text" x-model="formRegistro.codigoPase" placeholder="EJ: TRONO149-XYZ" required class="w-full border-slate-300 rounded-lg p-2.5 border uppercase tracking-widest text-center font-mono font-bold text-amber-700 bg-amber-50/50">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+          <input type="text" x-model="formRegistro.nombre" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+          <input type="email" x-model="formRegistro.email" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Nueva Contraseña</label>
+          <input type="password" x-model="formRegistro.password" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+        </div>
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-amber-400 py-3 rounded-lg font-bold transition-colors shadow">
+          Validar e Registrar Cuenta
+        </button>
+      </form>
+    </div>
+  `,
 
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Clave Privada</label>
-                    <input type="password" x-model="registroDatos.password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="••••••••">
-                </div>
+  // 4. UMBRAL (INICIO DE SESIÓN / PORTAL INTERNO)
+  umbral: `
+    <!-- Si NO está logueado, muestra el formulario de Login para entrar al Umbral -->
+    <template x-if="!usuarioLogueado">
+      <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md border border-slate-200">
+        <div class="text-center mb-6">
+          <div class="w-12 h-12 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">🏛️</div>
+          <h2 class="text-2xl font-bold text-slate-800">El Umbral</h2>
+          <p class="text-slate-500 text-sm mt-1">Identificación de acceso para miembros del Taller</p>
+        </div>
+        <form @submit.prevent="iniciarSesion()" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+            <input type="email" x-model="formLogin.email" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+            <input type="password" x-model="formLogin.password" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+          </div>
+          <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-lg font-bold transition-colors shadow">
+            Entrar al Taller
+          </button>
+        </form>
+      </div>
+    </template>
 
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Rango / Columna Asignada</label>
-                    <select x-model="registroDatos.rol" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                        <option value="aprendiz">Columna de Aprendices</option>
-                        <option value="companero">Columna de Compañeros</option>
-                        <option value="maestro">Cámara de Maestros</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="w-full bg-slate-100 hover:bg-white text-slate-950 font-bold uppercase tracking-widest py-2.5 rounded-lg text-xs transition duration-300 mt-2">
-                    Validar e Ingresar
-                </button>
-            </form>
-
-            <p class="text-[10px] text-center text-slate-500 uppercase tracking-wide">
-                ¿Ya posees una cuenta activa? <span @click="cambiarVista('login')" class="text-amber-500 cursor-pointer hover:underline">Cruza el Umbral aquí</span>
+    <!-- Si YA está logueado, muestra la Cámara de Trazados según su Nivel de Perfil -->
+    <template x-if="usuarioLogueado">
+      <div class="space-y-6">
+        <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">El Umbral - Cámara de Trazados</h2>
+            <p class="text-slate-500 text-sm">
+              Trabajos arquitectónicos e instrucción para: <span class="font-bold text-amber-600 capitalize" x-text="usuarioLogueado.grado"></span>
             </p>
+          </div>
+          <button @click="abrirModalCrearTrazado()" class="bg-slate-900 text-amber-400 hover:bg-slate-800 px-4 py-2 rounded-lg font-medium text-sm transition-colors">
+            + Presentar Trazado
+          </button>
         </div>
-    `,
 
-    // =====================================================================
-    // 🚪 CÁMARA 4: ACCESO E IDENTIFICACIÓN (LOGIN)
-    // =====================================================================
-    login: `
-        <div class="animate-fade-in max-w-sm mx-auto space-y-6 py-6">
-            <div class="text-center space-y-2">
-                <div class="inline-flex w-12 h-12 items-center justify-center rounded-full bg-amber-500/5 border border-amber-500/20 text-amber-400 text-xl mb-1">🔐</div>
-                <h2 class="font-serif text-2xl font-bold text-slate-100">Traspasar el Umbral</h2>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">Identificación Oficial del Taller</p>
-            </div>
-
-            <form @submit.prevent="iniciarSesion()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-2xl space-y-4 shadow-2xl">
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium tracking-wider">Identidad / Usuario</label>
-                    <input type="text" x-model="credenciales.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="ej. venerable">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <template x-for="trazado in trazadosFiltrados" :key="trazado.id">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded bg-amber-100 text-amber-800" x-text="trazado.grado"></span>
+                  <span class="text-xs text-slate-400" x-text="trazado.fecha"></span>
                 </div>
-
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium tracking-wider">Palabra de Pase Oculta</label>
-                    <input type="password" x-model="credenciales.password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="••••••••">
-                </div>
-
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-2.5 rounded-lg text-xs shadow-md shadow-amber-500/5 transition duration-300 mt-2">
-                    Iniciar Trabajos 📐
-                </button>
-            </form>
-
-            <div class="bg-slate-950/30 border border-slate-900/60 p-3 rounded-lg text-[10px] text-slate-500 leading-relaxed text-center">
-                <span class="text-amber-500/80 font-bold block mb-0.5">🔑 CREDENCIALES DE PRUEBA:</span>
-                Usuario: <code class="text-slate-300 font-mono">venerable</code> | Clave: <code class="text-slate-300 font-mono">lapis123</code>
+                <h3 class="font-bold text-slate-800 text-lg mb-2" x-text="trazado.titulo"></h3>
+                <p class="text-slate-600 text-sm line-clamp-3 mb-4" x-text="trazado.resumen"></p>
+              </div>
+              <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                <span class="text-xs text-slate-500 font-medium" x-text="trazado.autor"></span>
+                <button @click="verTrazadoCompleto(trazado)" class="text-xs text-amber-600 font-bold hover:underline">Leer Más →</button>
+              </div>
             </div>
+          </template>
         </div>
-    `,
+      </div>
+    </template>
+  `,
 
-    // =====================================================================
-    // 📜 CÁMARA 5: INTRANET DE ADMINISTRACIÓN (EL TALLER INTERNO)
-    // =====================================================================
-    admin: `
-        <div class="animate-fade-in space-y-6">
-            <!-- Banner de Control Superior -->
-            <div class="bg-gradient-to-r from-slate-950 via-slate-950 to-amber-950/20 border border-slate-900 p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
-                <div class="space-y-1">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xs font-bold uppercase tracking-widest px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded">Cámara Activa</span>
-                        <span class="text-slate-600 text-[10px]">•</span>
-                        <span class="text-[10px] text-slate-400 font-mono uppercase" x-text="'Rol: ' + usuarioLogueado?.rol"></span>
-                    </div>
-                    <h2 class="font-serif text-xl font-bold text-slate-100" x-text="'Trabajos de ' + (usuarioLogueado?.nombre || 'Hermano')"></h2>
-                </div>
-                
-                <!-- Acciones Rápidas del Admin -->
-                <button @click="generarCodigoPase()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-xl shadow transition duration-300">
-                    ⚒️ Labrar Pase Digital
-                </button>
-            </div>
-
-            <!-- Panel Central: Control de Invitaciones -->
-            <div class="space-y-3">
-                <h3 class="font-serif text-sm font-bold text-slate-300 uppercase tracking-wider">Libro de Registro de Pases Digitales</h3>
-                <p class="text-slate-400 text-xs leading-relaxed">Códigos de invitación vigentes emitidos para la admisión de nuevos usuarios en las columnas digitales.</p>
-                
-                <div class="overflow-x-auto bg-slate-950/60 border border-slate-900 rounded-xl shadow-lg">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-slate-900 bg-slate-950 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                                <th class="p-4">Palabra / Token</th>
-                                <th class="p-4">Columna Destino</th>
-                                <th class="p-4 text-center">Estado de Uso</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-xs text-slate-300 font-mono">
-                            <template x-for="pase in pasesGenerados" :key="pase.codigo">
-                                <tr class="border-b border-slate-900/50 hover:bg-slate-900/20 transition">
-                                    <td class="p-4 font-bold text-amber-400 tracking-wide" x-text="pase.codigo"></td>
-                                    <td class="p-4 uppercase text-slate-400 text-[11px]" x-text="pase.rol"></td>
-                                    <td class="p-4 text-center">
-                                        <span :class="pase.usado ? 'bg-red-950 text-red-400 border-red-900/30' : 'bg-emerald-950 text-emerald-400 border-emerald-900/30'" class="px-2 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold border" x-text="pase.usado ? 'Consagrado' : 'Disponible'"></span>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  // 5. VISTA DE ADMINISTRACIÓN / PERFIL DEL TRONO
+  admin: `
+    <div class="space-y-8">
+      <div class="bg-slate-900 text-white p-6 rounded-xl border border-amber-500/30 flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-amber-400">Perfil del Trono - Administración Gremial</h2>
+          <p class="text-slate-300 text-sm">Panel exclusivo del Venerable Maestro y Dignatarios.</p>
         </div>
-    `
+        <span class="bg-amber-500/20 text-amber-400 text-xs px-3 py-1.5 rounded-full border border-amber-500/40 font-mono">Venerable Maestro</span>
+      </div>
+
+      <!-- Generador de Código de Pase del Venerable Maestro -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-800 mb-2">Generar Nuevo Código de Pase</h3>
+        <p class="text-slate-500 text-sm mb-4">Genera un código único para habilitar el registro de nuevos hermanos en la vista 'Palabra de Pase'.</p>
+        <div class="flex gap-4">
+          <button @click="generarNuevoCodigoPase()" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm transition-colors">
+            Generar Código
+          </button>
+          <div class="flex-grow bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-center font-mono font-bold text-slate-700" x-text="ultimoCodigoGenerado || 'Presiona para generar...'"></div>
+        </div>
+      </div>
+
+      <!-- Gestión de Miembros y Cantera -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Gestión de Cantera y Cuadro Logial</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-100 text-slate-600 font-semibold uppercase text-xs">
+              <tr>
+                <th class="p-3">Hermano</th>
+                <th class="p-3">Grado Actual</th>
+                <th class="p-3">Rol</th>
+                <th class="p-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <template x-for="hermano in listaHermanos" :key="hermano.id">
+                <tr>
+                  <td class="p-3 font-medium text-slate-800" x-text="hermano.nombre"></td>
+                  <td class="p-3 text-slate-600 capitalize" x-text="hermano.grado"></td>
+                  <td class="p-3 text-slate-600 capitalize" x-text="hermano.rol"></td>
+                  <td class="p-3">
+                    <button @click="cambiarRolHermano(hermano)" class="text-amber-600 hover:underline font-bold text-xs">Aumentar Salario / Rol</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
 };
