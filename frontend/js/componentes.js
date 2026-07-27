@@ -720,32 +720,21 @@ window.VistasProyectoLapis = {
                     <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Canal de Comunicación Multigrado</h3>
                 </div>
                 
-                <template x-if="['trono_supremo', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
-                    <div class="space-y-3">
-                        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800 text-xs h-40 overflow-y-auto space-y-2">
-                            <template x-for="msg in historialChat">
-                                <div>
-                                    <span :class="{
-                                        'text-amber-500': ['venerable_maestro', 'trono_supremo'].includes(msg.rol), 
-                                        'text-blue-400': msg.rol === 'primer_vigilante',
-                                        'text-emerald-400': msg.rol === 'segundo_vigilante'
-                                    }" class="font-bold" x-text="msg.autor"></span> 
-                                    <span class="text-slate-200" x-text="msg.texto"></span>
-                                </div>
-                            </template>
+                <div class="bg-slate-950/80 border border-slate-900 rounded-lg p-4 h-48 overflow-y-auto space-y-3 font-mono text-xs">
+                    <template x-for="(msg, i) in historialChat" :key="i">
+                        <div class="flex items-start gap-2">
+                            <span class="text-amber-500 font-bold shrink-0" x-text="msg.autor"></span>
+                            <span class="text-slate-300 break-words" x-text="msg.texto"></span>
                         </div>
-                        <div class="flex gap-2">
-                            <input type="text" x-model="nuevoMensajeTexto" @keydown.enter="enviarMensajeChat()" :placeholder="'Escribir como ' + usuarioLogueado.nombre + '...'" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                            <button @click="enviarMensajeChat()" class="bg-amber-500 text-slate-950 text-xs font-bold px-4 py-1.5 rounded-lg hover:bg-amber-400 transition">Enviar</button>
-                        </div>
-                    </div>
-                </template>
+                    </template>
+                </div>
 
-                <template x-if="!['trono_supremo', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
-                    <div class="p-4 bg-red-950/20 border border-red-900/40 rounded-lg text-center">
-                        <p class="text-xs text-red-400 font-serif italic">"El canal se encuentra en silencio. Silencio y reserva tradicionales de tu Columna."</p>
-                    </div>
-                </template>
+                <form @submit.prevent="enviarMensajeChat()" class="flex gap-2">
+                    <input type="text" x-model="nuevoMensajeTexto" placeholder="Escribe un mensaje en el canal..." class="flex-grow bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                    <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs uppercase tracking-wider transition">
+                        Enviar
+                    </button>
+                </form>
             </div>
         </div>
     `
