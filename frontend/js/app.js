@@ -6,12 +6,11 @@ document.addEventListener('alpine:init', () => {
         // =====================================================================
         // 📊 ESTADOS GLOBALES DE LA APLICACIÓN
         // =====================================================================
-        vistaActual: 'pasos_perdidos', // Vista inicial por defecto
-        sesionActiva: false,           // Control de acceso al taller (Intranet)
-        contadorVisitas: 357,          // Contador simulado para Pasos Perdidos
-        usuarioLogueado: null,         // Almacena los datos del usuario activo
+        vistaActual: 'pasos_perdidos',
+        sesionActiva: false,
+        contadorVisitas: 357,
+        usuarioLogueado: null,
         
-        // Modelos de datos para los distintos formularios del sistema
         credenciales: {
             usuario: '',
             password: ''
@@ -19,9 +18,11 @@ document.addEventListener('alpine:init', () => {
         registroDatos: {
             usuario: '',
             password: '',
+            password_confirm: '',
             nombre_real: '',
             rol: 'aprendiz',
-            codigo_pase: ''
+            codigo_pase: '',
+            respuesta_secreta: ''
         },
         nuevoCenso: {
             nombre: '',
@@ -37,38 +38,40 @@ document.addEventListener('alpine:init', () => {
             pregunta_deporte: ''
         },
 
-        // Registro base de pases emitidos en el taller (Simulación de persistencia)
         pasesGenerados: [
             { codigo: 'LAPIS-777X', rol: 'maestro', usado: false },
             { codigo: 'LAPIS-333A', rol: 'aprendiz', usado: true },
             { codigo: 'LAPIS-555B', rol: 'companero', usado: false }
         ],
 
+        toquesDePuerta: [
+            { nombre: 'Carlos Mendoza', cedula: 'V-14.340.112', correo: 'carlos.m@mail.com', telefono: '0412-5551234', mensaje: 'Deseo ingresar para expandir mi formación ética.', estado: 'pendiente', codigo_generado: '' }
+        ],
+
         // =====================================================================
         // 🔄 MÉTODOS Y MANEJADORES DE FLUJO
         // =====================================================================
         
-        // Cambiar entre las diferentes vistas de componentes.js
         cambiarVista(nuevaVista) {
             this.vistaActual = nuevaVista;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
 
-        // Procesar el ingreso formal a la Intranet (Pasar el Umbral)
         iniciarSesion() {
-            // Validación de credenciales de prueba
             if (this.credenciales.usuario === 'venerable' && this.credenciales.password === 'lapis123') {
                 this.usuarioLogueado = {
                     nombre: 'Venerable Maestro',
-                    rol: 'venerable_maestro'
+                    rol: 'venerable_maestro',
+                    rol_etiqueta: 'Venerable Maestro Activo'
                 };
                 this.sesionActiva = true;
                 this.cambiarVista('admin');
                 this.limpiarFormularios();
-            } else if (this.credenciales.usuario === 'trono' && this.credenciales.password === 'tech999') {
+            } else if (this.credenciales.usuario === 'trono' && this.credenciales.password === 'webmaster') {
                 this.usuarioLogueado = {
-                    nombre: 'Oficial del Trono',
-                    rol: 'trono'
+                    nombre: 'Webmaster Supremo',
+                    rol: 'trono_supremo',
+                    rol_etiqueta: 'Rol Supremo (Webmaster)'
                 };
                 this.sesionActiva = true;
                 this.cambiarVista('admin');
@@ -78,62 +81,53 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        // Registrar un nuevo usuario utilizando un código de pase válido
+        aprobarSolicitud(index) {
+            const numeroAleatorio = Math.floor(Math.random() * 9000) + 1000;
+            const nuevoCodigo = `LAPIS-${numeroAleatorio}`;
+            
+            this.toquesDePuerta[index].estado = 'aprobado';
+            this.toquesDePuerta[index].codigo_generado = nuevoCodigo;
+
+            this.pasesGenerados.push({
+                codigo: nuevoCodigo,
+                rol: 'aprendiz',
+                usado: false
+            });
+
+            alert(`Código generado para la solicitud: ${nuevoCodigo}`);
+        },
+
         registrarUsuario() {
-            // Verificar si el código de pase existe y no ha sido usado
             const paseEncontrado = this.pasesGenerados.find(
                 p => p.codigo === this.registroDatos.codigo_pase.toUpperCase() && !p.usado
             );
 
             if (paseEncontrado) {
                 paseEncontrado.usado = true;
-                alert(`Registro consagrado con éxito. Bienvenido a la columna de los ${this.registroDatos.rol}s, Q:. H:. ${this.registroDatos.nombre_real}.`);
+                alert(`Registro consagrado con éxito. Bienvenido al Taller.`);
                 
-                // Forzar inicio de sesión automático con el rol asignado
                 this.usuarioLogueado = {
-                    nombre: this.registroDatos.nombre_real,
-                    rol: this.registroDatos.rol
+                    nombre: this.registroDatos.usuario,
+                    rol: 'aprendiz',
+                    rol_etiqueta: 'Aprendiz'
                 };
                 this.sesionActiva = true;
-                this.cambiarVista('admin');
+                this.cambiarVista('umbral');
                 this.limpiarFormularios();
             } else {
-                alert('La palabra de pase o código introducido es inválido o ya ha sido utilizado en un registro previo.');
+                alert('La palabra de pase o código introducido es inválido o ya ha sido utilizado.');
             }
         },
 
-        // Guardar los datos del formulario de censo (Tocar puerta)
-        consignarPlanilla() {
-            alert(`Planilla de censo del Obrero ${this.nuevoCenso.nombre} recibida en el servidor. Los Oficiales de la Logia evaluarán tus datos.`);
-            this.cambiarVista('pasos_perdidos');
-            this.limpiarFormularios();
-        },
-
-        // Generar dinámicamente un código de pase aleatorio (Solo para Dignidades)
-        generarCodigoPase() {
-            const numeroAleatorio = Math.floor(Math.random() * 9000) + 1000;
-            const nuevoCodigo = `LAPIS-${numeroAleatorio}X`;
-            
-            this.pasesGenerados.push({
-                codigo: nuevoCodigo,
-                rol: 'aprendiz',
-                usado: false
-            });
-            
-            alert(`Nueva palabra de pase generada en las canteras: ${nuevoCodigo}`);
-        },
-
-        // Cerrar la sesión y retornar al espacio público
         cerrarSesion() {
             this.sesionActiva = false;
             this.usuarioLogueado = null;
             this.cambiarVista('pasos_perdidos');
         },
 
-        // Utilidad para limpiar los datos temporales de los inputs
         limpiarFormularios() {
             this.credenciales = { usuario: '', password: '' };
-            this.registroDatos = { usuario: '', password: '', nombre_real: '', rol: 'aprendiz', codigo_pase: '' };
+            this.registroDatos = { usuario: '', password: '', password_confirm: '', nombre_real: '', rol: 'aprendiz', codigo_pase: '', respuesta_secreta: '' };
             this.nuevoCenso = { nombre: '', cedula: '', correo: '', telefono: '', grado: 'Aprendiz', profesion: '', nacimiento: '', direccion: '', pregunta_mascota: '', pregunta_pelicula: '', pregunta_deporte: '' };
         }
     }));
