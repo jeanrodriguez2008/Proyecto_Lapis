@@ -4,7 +4,7 @@ document.addEventListener('alpine:init', () => {
     // Estado de Navegación y Sesión
     vistaActual: 'pasos_perdidos',
     seccionUmbral: 'trazados',
-    categoriaPasosPerdidos: null, // Control de acordeón desplegable en tarjetas
+    categoriaPasosPerdidos: null,
     modoRecuperar: false,
     usuarioLogueado: null,
     contadorVisitas: 0,
@@ -190,7 +190,6 @@ document.addEventListener('alpine:init', () => {
 
     // Inicialización del Estado
     async init() {
-      // Manejo de visitas persistente localmente
       let visitasLocales = localStorage.getItem('lapis_contador_visitas');
       if (visitasLocales === null) {
         visitasLocales = 1;
@@ -260,6 +259,30 @@ document.addEventListener('alpine:init', () => {
       this.categoriaPasosPerdidos = (this.categoriaPasosPerdidos === cat) ? null : cat;
     },
 
+    // FUNCIÓN PARA ABRIR ARTÍCULOS DE PASOS PERDIDOS EN MODAL
+    verArticuloPasosPerdidos(tarjeta) {
+      let botonPdf = '';
+      if (tarjeta.urlPdf) {
+        botonPdf = `<div class="mt-4 pt-3 border-t text-center"><a href="${tarjeta.urlPdf}" target="_blank" class="inline-block bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors shadow">📄 Abrir / Descargar Documento PDF</a></div>`;
+      }
+
+      Swal.fire({
+        title: tarjeta.titulo,
+        html: `
+          <div class="text-left text-sm space-y-3">
+            <div class="flex justify-between items-center text-xs text-slate-500 border-b pb-2">
+              <span><b>Autor:</b> ${tarjeta.autor || 'Institucional'}</span>
+              <span><b>Fecha:</b> ${tarjeta.fecha || ''}</span>
+            </div>
+            <div class="text-slate-800 leading-relaxed whitespace-pre-wrap py-2">${tarjeta.contenido}</div>
+            ${botonPdf}
+          </div>
+        `,
+        confirmButtonColor: '#d97706',
+        confirmButtonText: 'Cerrar'
+      });
+    },
+
     async cargarBalotajesBackend() {
       if (!window.apiConnection) return;
       try {
@@ -282,7 +305,6 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // Permisos de Acceso a Salas de Chat
     puedeAccederSalaChat(sala) {
       if (!this.usuarioLogueado) return false;
       const rol = this.usuarioLogueado.rol || '';
@@ -320,7 +342,6 @@ document.addEventListener('alpine:init', () => {
       this.nuevoMensajeChat = '';
     },
 
-    // Evaluadores de Permisos
     esAdministradorOWebmaster() {
       if (!this.usuarioLogueado) return false;
       const rol = this.usuarioLogueado.rol;
@@ -350,7 +371,6 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // Iniciar Sesión
     async iniciarSesion() {
       const inputUsuario = this.formLogin.email ? this.formLogin.email.trim().toLowerCase() : '';
       const inputPassword = this.formLogin.password ? this.formLogin.password.trim() : '';
@@ -558,7 +578,6 @@ document.addEventListener('alpine:init', () => {
           this.tarjetasDinamicas.unshift(nuevaTarjeta);
         }
 
-        // Abre automáticamente la categoría donde se acaba de publicar
         this.categoriaPasosPerdidos = categoria;
 
         Swal.fire({
