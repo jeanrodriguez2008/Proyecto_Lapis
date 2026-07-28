@@ -7,7 +7,7 @@ document.addEventListener('alpine:init', () => {
     categoriaPasosPerdidos: 'todos',
     modoRecuperar: false,
     usuarioLogueado: null,
-    contadorVisitas: 149,
+    contadorVisitas: 0,
 
     // Gestión del Chat Interno
     salaChatActual: 'aprendiz',
@@ -190,6 +190,16 @@ document.addEventListener('alpine:init', () => {
 
     // Inicialización del Estado
     async init() {
+      // Manejo de visitas persistente localmente
+      let visitasLocales = localStorage.getItem('lapis_contador_visitas');
+      if (visitasLocales === null) {
+        visitasLocales = 1;
+      } else {
+        visitasLocales = parseInt(visitasLocales, 10) + 1;
+      }
+      this.contadorVisitas = visitasLocales;
+      localStorage.setItem('lapis_contador_visitas', visitasLocales);
+
       const sesionGuardada = localStorage.getItem('lapis_sesion');
       if (sesionGuardada) {
         try {

@@ -28,6 +28,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Variable global en memoria para conteo centralizado
+contador_visitas_global = 0
+
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
@@ -130,7 +133,7 @@ def recuperar_password(req: schemas.RecuperarPasswordRequest, db: Session = Depe
 
 
 # ==========================================
-# 🏛️ ENDPOINTS: PASOS PERDIDOS
+# 🏛️ ENDPOINTS: PASOS PERDIDOS Y VISITAS
 # ==========================================
 
 @app.get("/api/pasos-perdidos", response_model=List[schemas.TarjetaPasosPerdidosResponse])
@@ -172,6 +175,13 @@ def eliminar_pasos_perdidos(tarjeta_id: int, db: Session = Depends(get_db), auto
     db.delete(tarjeta)
     db.commit()
     return {"mensaje": "Publicación eliminada correctamente."}
+
+
+@app.post("/api/pasos-perdidos/visitas")
+def registrar_visita():
+    global contador_visitas_global
+    contador_visitas_global += 1
+    return {"visitas": contador_visitas_global}
 
 
 # ==========================================
