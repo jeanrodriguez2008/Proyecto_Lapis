@@ -1,741 +1,626 @@
-// js/componentes.js
-// Catálogo de Vistas Estructuradas para el Proyecto Lapis
-
+// Catálogo de Componentes HTML - Proyecto Lapis
 window.VistasProyectoLapis = {
-    // =====================================================================
-    // 🏛️ CÁMARA 1: PASOS PERDIDOS (PORTAL PÚBLICO / BIENVENIDA)
-    // =====================================================================
-    pasos_perdidos: `
-        <div class="space-y-8 animate-fade-in">
-            <div class="text-center max-w-2xl mx-auto space-y-3">
-                <span class="text-amber-500 font-serif tracking-widest text-xs uppercase block font-semibold">Bienvenido al Umbral Virtual</span>
-                <h2 class="font-serif text-3xl md:text-4xl font-bold tracking-tight text-slate-100">Sala de Pasos Perdidos</h2>
-                <div class="h-0.5 w-20 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto mt-4"></div>
-                <p class="text-slate-400 text-sm leading-relaxed pt-2">
-                    Este espacio precede a los trabajos del Taller. Desde aquí, los Obreros de la escuadra pueden interactuar con las herramientas digitales oficiales, actualizar su censo institucional o solicitar acceso a las columnas internas.
-                </p>
-            </div>
+  // 1. PASOS PERDIDOS (INICIO CON TARJETAS INTERACTIVAS Y BIBLIOTECA DIGITAL)
+  pasos_perdidos: `
+    <section class="text-center py-12 px-4 bg-slate-900 text-white rounded-2xl shadow-xl mb-12 border border-amber-500/30 relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <img src="logo.png" alt="Logo Logia Dignidad Humana N° 149" class="h-56 w-auto mx-auto mb-6 object-contain drop-shadow-xl">
+      
+      <h1 class="text-3xl md:text-5xl font-extrabold text-amber-400 mb-4 tracking-tight">
+        Resp:. Logia:. Sob:. Dignidad Humana N° 149
+      </h1>
+      <p class="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto font-light leading-relaxed mb-6">
+        Un espacio de reflexión, búsqueda de la verdad y construcción moral al servicio de la humanidad y el perfeccionamiento del espíritu.
+      </p>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                <div class="bg-slate-950/60 border border-slate-900 rounded-xl p-6 hover:border-amber-500/30 transition duration-300 group flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-2xl text-amber-500">📋</span>
-                            <span class="text-[9px] uppercase tracking-widest bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-bold">Obligatorio</span>
-                        </div>
-                        <h3 class="font-serif text-lg font-bold text-slate-200 group-hover:text-amber-400 transition mb-2">Censo Gremial 2026</h3>
-                        <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                            Si eres miembro activo de la Logia, es tu deber actualizar tu ficha de datos socio-profesionales para mantener la regularidad en los registros del archivo secreto.
-                        </p>
-                    </div>
-                    <button @click="cambiarVista('censo')" class="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition">
-                        Actualizar Ficha
-                    </button>
-                </div>
+      <div class="inline-flex items-center gap-3 bg-slate-800/80 px-4 py-2 rounded-full border border-amber-500/40 shadow-inner">
+        <span class="text-xs uppercase tracking-widest text-amber-400 font-semibold">Visitas a Pasos Perdidos:</span>
+        <span class="text-lg font-bold text-white font-mono" x-text="contadorVisitas">0</span>
+      </div>
+    </section>
 
-                <div class="bg-slate-950/60 border border-slate-900 rounded-xl p-6 hover:border-amber-500/30 transition duration-300 group flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-2xl text-amber-500">🔑</span>
-                            <span class="text-[9px] uppercase tracking-widest bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 font-bold">Invitados</span>
-                        </div>
-                        <h3 class="font-serif text-lg font-bold text-slate-200 group-hover:text-amber-400 transition mb-2">Registrar Credenciales</h3>
-                        <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                            ¿Has recibido un pase digital generado en las canteras? Utiliza tu código de autorización para consagrar tu usuario y clave privada de acceso al Taller.
-                        </p>
-                    </div>
-                    <button @click="cambiarVista('registro')" class="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition">
-                        Consagrar Cuenta
-                    </button>
-                </div>
-            </div>
-
-            <div x-data="{ abierto: null }" class="bg-slate-950/40 border border-slate-900 rounded-xl p-4 mt-6">
-                <h4 class="font-serif text-xs font-bold tracking-widest text-slate-400 uppercase mb-4 px-2">ℹ️ Protocolos de Información</h4>
-                
-                <div class="border-b border-slate-900 last:border-0">
-                    <button @click="abierto = (abierto === 1 ? null : 1)" class="w-full text-left py-3 px-2 flex justify-between items-center text-xs font-semibold text-slate-300 hover:text-amber-400 transition">
-                        <span>¿Quiénes pueden acceder al área interna del Taller?</span>
-                        <span x-text="abierto === 1 ? '−' : '+'" class="text-amber-500 text-sm"></span>
-                    </button>
-                    <div x-show="abierto === 1" x-collapse class="px-2 pb-3 text-slate-400 text-xs leading-relaxed">
-                        Solo los Hermanos debidamente registrados que posean un usuario activo y conozcan la palabra de pase vigente asignada a sus respectivas dignidades pueden trasponer el Umbral del Taller.
-                    </div>
-                </div>
-
-                <div class="border-b border-slate-900 last:border-0">
-                    <button @click="abierto = (abierto === 2 ? null : 2)" class="w-full text-left py-3 px-2 flex justify-between items-center text-xs font-semibold text-slate-300 hover:text-amber-400 transition">
-                        <span>¿Qué ocurre si mis datos del censo están desactualizados?</span>
-                        <span x-text="abierto === 2 ? '−' : '+'" class="text-amber-500 text-sm"></span>
-                    </button>
-                    <div x-show="abierto === 2" x-collapse class="px-2 pb-3 text-slate-400 text-xs leading-relaxed">
-                        La falta de información actualizada podría congelar temporalmente la emisión automática de tus pases de acceso digital, requiriendo validación física ante la secretaría del Taller.
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-between border-t border-slate-900 pt-6 text-[10px] tracking-widest text-slate-500 uppercase">
-                <div>Estado de Red: <span class="text-emerald-500 font-bold">● Operativo</span></div>
-                <div>Visitas al Portal: <span x-text="contadorVisitas" class="text-slate-300 font-bold"></span></div>
-            </div>
-        </div>
-    `,
-
-    // =====================================================================
-    // 📋 CÁMARA 2: FORMULARIO DE CENSO GREMIAL
-    // =====================================================================
-    censo: `
-        <div class="animate-fade-in space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-900 pb-4">
-                <div>
-                    <h2 class="font-serif text-xl font-bold text-slate-100">Ficha de Censo Anual</h2>
-                    <p class="text-[10px] uppercase tracking-widest text-slate-500">Actualización de Registros Históricos</p>
-                </div>
-                <button @click="cambiarVista('pasos_perdidos')" class="text-xs text-slate-400 hover:text-amber-500 transition">✕ Cancelar</button>
-            </div>
-
-            <form @submit.prevent="consignarPlanilla()" class="space-y-6">
-                <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-900 space-y-4">
-                    <h3 class="text-[10px] font-bold tracking-widest uppercase text-amber-500">1. Identidad Personal y Gremial</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Nombre Completo</label>
-                            <input type="text" x-model="nuevoCenso.nombre" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Ej. Juan Pérez">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Cédula de Identidad</label>
-                            <input type="text" x-model="nuevoCenso.cedula" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Ej. 12345678">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Grado Actual</label>
-                            <select x-model="nuevoCenso.grado" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                                <option value="Aprendiz">Aprendiz</option>
-                                <option value="Compañero">Compañero</option>
-                                <option value="Maestro">Maestro</option>
-                                <option value="Past Master">Past Master</option>
-                            </select>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Profesión u Oficio Profano</label>
-                            <input type="text" x-model="nuevoCenso.profesion" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Ej. Ingeniero de Software">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-900 space-y-4">
-                    <h3 class="text-[10px] font-bold tracking-widest uppercase text-amber-500">2. Canales de Comunicación</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Correo Electrónico</label>
-                            <input type="email" x-model="nuevoCenso.correo" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="hermano@correo.com">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Teléfono de Contacto</label>
-                            <input type="tel" x-model="nuevoCenso.telefono" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="+58 412-0000000">
-                        </div>
-                        <div class="sm:col-span-2 space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Dirección de Domicilio</label>
-                            <input type="text" x-model="nuevoCenso.direccion" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Ciudad, Estado, Municipio...">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-900 space-y-4">
-                    <h3 class="text-[10px] font-bold tracking-widest uppercase text-amber-500">3. Palabras de Reconocimiento y Seguridad</h3>
-                    <p class="text-[11px] text-slate-400 leading-relaxed italic">Contesta estas breves preguntas profanas que servirán para validar tu identidad en caso de pérdida de claves.</p>
-                    <div class="space-y-3">
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">¿Cuál fue el nombre de tu primera mascota?</label>
-                            <input type="text" x-model="nuevoCenso.pregunta_mascota" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">¿Cuál es tu película favorita de la infancia?</label>
-                            <input type="text" x-model="nuevoCenso.pregunta_pelicula" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-3 rounded-xl text-xs shadow-lg shadow-amber-500/10 transition duration-300">
-                    🏛️ Tocar la Puerta del Archivo
-                </button>
-            </form>
-        </div>
-    `,
-
-    // =====================================================================
-    // 🔑 CÁMARA 3: REGISTRO MEDIANTE CÓDIGO DE PASE
-    // =====================================================================
-    registro: `
-        <div class="animate-fade-in max-w-md mx-auto space-y-6 py-4">
-            <div class="text-center space-y-2">
-                <h2 class="font-serif text-2xl font-bold text-slate-100">Consagrar Nueva Cuenta</h2>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">Usa tu Código de Invitación Autorizado</p>
-                <div class="h-0.5 w-12 bg-amber-500 mx-auto mt-2"></div>
-            </div>
-
-            <form @submit.prevent="registrarUsuario()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-2xl space-y-4 shadow-xl">
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Código de Pase Digital</label>
-                    <input type="text" x-model="registroDatos.codigo_pase" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-amber-400 font-mono font-bold uppercase text-center focus:outline-none focus:border-amber-500 tracking-widest transition" placeholder="LAPIS-XXXX">
-                </div>
-                
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Nombre Completo Institucional</label>
-                    <input type="text" x-model="registroDatos.nombre_real" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="Q:. H:. Nombre Apellido">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Nombre de Usuario Único</label>
-                    <input type="text" x-model="registroDatos.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="ej. hsecretario">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Clave Privada</label>
-                    <input type="password" x-model="registroDatos.password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="••••••••">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 tracking-wider">Confirmar Clave Privada</label>
-                    <input type="password" x-model="registroDatos.password_confirm" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="••••••••">
-                </div>
-
-                <button type="submit" class="w-full bg-slate-100 hover:bg-white text-slate-950 font-bold uppercase tracking-widest py-2.5 rounded-lg text-xs transition duration-300 mt-2">
-                    Validar e Ingresar
-                </button>
-            </form>
-
-            <p class="text-[10px] text-center text-slate-500 uppercase tracking-wide">
-                ¿Ya posees una cuenta activa? <span @click="cambiarVista('login')" class="text-amber-500 cursor-pointer hover:underline">Cruza el Umbral aquí</span>
-            </p>
-        </div>
-    `,
-
-    // =====================================================================
-    // 🚪 CÁMARA 4: ACCESO E IDENTIFICACIÓN (LOGIN)
-    // =====================================================================
-    login: `
-        <div class="animate-fade-in max-w-sm mx-auto space-y-6 py-6">
-            <div class="text-center space-y-2">
-                <div class="inline-flex w-12 h-12 items-center justify-center rounded-full bg-amber-500/5 border border-amber-500/20 text-amber-400 text-xl mb-1">🔐</div>
-                <h2 class="font-serif text-2xl font-bold text-slate-100">Traspasar el Umbral</h2>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">Identificación Oficial del Taller</p>
-            </div>
-
-            <form @submit.prevent="iniciarSesion()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-2xl space-y-4 shadow-2xl">
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium tracking-wider">Identidad / Usuario</label>
-                    <input type="text" x-model="credenciales.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="ej. venerable">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium tracking-wider">Palabra de Pase Oculta</label>
-                    <input type="password" x-model="credenciales.password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition" placeholder="••••••••">
-                </div>
-
-                <div class="text-right">
-                    <button type="button" @click="cambiarVista('recuperar_password')" class="text-[11px] text-amber-500/80 hover:text-amber-400 underline transition">
-                        ¿Olvidaste tu contraseña?
-                    </button>
-                </div>
-
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-2.5 rounded-lg text-xs shadow-md shadow-amber-500/5 transition duration-300 mt-2">
-                    Iniciar Trabajos 📐
-                </button>
-            </form>
-
-            <div class="bg-slate-950/30 border border-slate-900/60 p-3 rounded-lg text-[10px] text-slate-500 leading-relaxed text-center">
-                <span class="text-amber-500/80 font-bold block mb-0.5">🔑 CREDENCIALES DE PRUEBA:</span>
-                Usuario: <code class="text-slate-300 font-mono">venerable</code> | Clave: <code class="text-slate-300 font-mono">lapis123</code>
-            </div>
-        </div>
-    `,
-
-    // =====================================================================
-    // 🚪 CÁMARA 5: SOLICITUD DE CONTACTO (TOCAR PUERTA)
-    // =====================================================================
-    tocar_puerta: `
-        <div class="space-y-6 max-w-2xl mx-auto">
-            <div class="flex items-center justify-between border-b border-slate-900 pb-4">
-                <div>
-                    <h2 class="font-serif text-xl font-bold text-slate-100">Tocar la Puerta del Taller</h2>
-                    <p class="text-[10px] uppercase tracking-widest text-slate-500">Solicitud Formal de Contacto e Ingreso</p>
-                </div>
-                <button @click="cambiarVista('pasos_perdidos')" class="text-xs text-slate-400 hover:text-amber-500 transition">✕ Cerrar</button>
-            </div>
-            <form @submit.prevent="enviarContacto()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-xl space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Nombre Y Apellido</label>
-                        <input type="text" x-model="contactoDatos.nombre" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Cédula de Identidad</label>
-                        <input type="text" x-model="contactoDatos.cedula" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Correo Electrónico</label>
-                        <input type="email" x-model="contactoDatos.correo" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Teléfono</label>
-                        <input type="tel" x-model="contactoDatos.telefono" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Profesión</label>
-                        <input type="text" x-model="contactoDatos.profesion" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Redes Sociales</label>
-                        <input type="text" x-model="contactoDatos.redes" placeholder="@usuario" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium">Dirección de Habitación</label>
-                    <input type="text" x-model="contactoDatos.direccion" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium">Motivo de la Solicitud</label>
-                    <textarea x-model="contactoDatos.mensaje" rows="4" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition resize-none" placeholder="Expresa detalladamente aquí los motivos..."></textarea>
-                </div>
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-3 rounded-lg text-xs transition shadow-lg">
-                    🏛️ Presentar Toque en la Puerta del Taller
-                </button>
-            </form>
-        </div>
-    `,
-
-    // =====================================================================
-    // 🔑 CÁMARA 6: REGISTRO RÁPIDO CON PALABRA DE PASE
-    // =====================================================================
-    palabra_pase: `
-        <div class="max-w-xl mx-auto space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-900 pb-4">
-                <div>
-                    <h2 class="font-serif text-xl font-bold text-slate-100">Palabra de Pase</h2>
-                    <p class="text-[10px] uppercase tracking-widest text-slate-500">Registro de Nuevo Miembro Autorizado</p>
-                </div>
-                <button @click="cambiarVista('pasos_perdidos')" class="text-xs text-slate-400 hover:text-amber-500 transition">✕ Cancelar</button>
-            </div>
-            <form @submit.prevent="registrarUsuario()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-xl space-y-4 shadow-xl">
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium tracking-wider">Código de Autorización</label>
-                    <input type="text" x-model="registroDatos.codigo_pase" placeholder="LAPIS-XXXX" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-amber-400 font-mono text-center tracking-widest focus:outline-none focus:border-amber-500 transition">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium">Nombre de Usuario</label>
-                    <input type="text" x-model="registroDatos.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Contraseña</label>
-                        <input type="password" x-model="registroDatos.password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Confirmar Contraseña</label>
-                        <input type="password" x-model="registroDatos.password_confirm" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                </div>
-                <div class="pt-2 border-t border-slate-900 space-y-3">
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Tu Respuesta Oculta (Película Favorita)</label>
-                        <input type="text" x-model="registroDatos.respuesta_secreta" required placeholder="Escribe tu respuesta aquí" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-slate-100 hover:bg-white text-slate-950 font-bold uppercase tracking-widest py-3 rounded-lg text-xs transition shadow-lg mt-2">
-                    Consagrar Registro y Cuenta
-                </button>
-            </form>
-        </div>
-    `,
-
-    // =====================================================================
-    // 🔮 CÁMARA 7: EL UMBRAL (VISTA INTERNA)
-    // =====================================================================
-    umbral: `
+    <!-- Tarjetas Interactivas como Filtro de Secciones (4 Columnas) -->
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <!-- Tarjeta 1: Principios Fundamentales -->
+      <div @click="categoriaPasosPerdidos = (categoriaPasosPerdidos === 'principios' ? 'todos' : 'principios')"
+           :class="categoriaPasosPerdidos === 'principios' ? 'ring-2 ring-amber-500 bg-amber-50/30 shadow-lg -translate-y-1' : 'bg-white hover:shadow-lg hover:-translate-y-1'"
+           class="p-6 rounded-xl shadow-md border-t-4 border-amber-500 transition-all duration-300 cursor-pointer flex flex-col justify-between select-none">
         <div>
-            <template x-if="!sesionActiva">
-                <div class="max-w-sm mx-auto space-y-6 py-4">
-                    <div class="text-center space-y-3 flex flex-col items-center">
-                        <img src="frontend/logo.png" alt="Emblema del Taller" class="w-24 h-24 object-contain filter drop-shadow-lg hover:scale-105 transition-transform">
-                        <div>
-                            <h2 class="font-serif text-2xl font-bold text-slate-100">El Umbral</h2>
-                            <p class="text-[10px] uppercase tracking-widest text-slate-500">Identificación Oficial y Apertura de Trabajos</p>
-                        </div>
-                    </div>
-                    <form @submit.prevent="iniciarSesion()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-2xl space-y-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Identidad / Usuario</label>
-                            <input type="text" x-model="credenciales.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] uppercase text-slate-400 font-medium">Palabra Clave</label>
-                            <input type="password" x-model="credenciales.password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                        </div>
-                        <div class="text-right">
-                            <button type="button" @click="cambiarVista('recuperar_password')" class="text-[11px] text-amber-500/80 hover:text-amber-400 underline transition">
-                                ¿Olvidaste tu contraseña?
-                            </button>
-                        </div>
-                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-2.5 rounded-lg text-xs transition">
-                            Ingresar al Taller 📐
-                        </button>
-                    </form>
-                </div>
-            </template>
-
-            <template x-if="sesionActiva">
-                <div class="space-y-8 py-4">
-                    <div class="border-b border-slate-900 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                        <div>
-                            <h2 class="font-serif text-2xl font-bold text-slate-100">Trabajos del Umbral</h2>
-                            <p class="text-[10px] uppercase tracking-widest text-slate-400" x-text="'Cámara de: ' + usuarioLogueado.nombre + ' (' + usuarioLogueado.rol_etiqueta + ')'"></p>
-                        </div>
-                        <button @click="abrirEditor('nuevo_trazado')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-widest px-3 py-2 rounded-lg transition shadow-lg">
-                            ✍️ Publicar Trazado
-                        </button>
-                    </div>
-
-                    <div class="space-y-8">
-                        <div class="space-y-4">
-                            <div class="flex items-center space-x-2 border-b border-slate-900 pb-2">
-                                <span class="text-base">🏛️</span>
-                                <h3 class="font-serif text-base font-bold text-amber-400 uppercase tracking-wider">Contenido Informativo (Pasos Perdidos)</h3>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                <template x-for="(item, index) in tarjetasReactivas.masoneria" :key="'umb-mas-'+index">
-                                    <div @click="trazadoSeleccionado = item" class="bg-slate-900/60 border border-slate-800 p-4 rounded-lg relative group/card cursor-pointer hover:border-amber-500/40 transition">
-                                        <span class="text-[9px] uppercase font-mono text-amber-500/70 block mb-1">Categoría: Masonería</span>
-                                        <template x-if="item.imagen">
-                                            <img :src="item.imagen" alt="Imagen Masonería" class="w-full h-28 object-cover rounded mb-2 border border-slate-800">
-                                        </template>
-                                        <h4 class="font-bold text-slate-200 uppercase mb-2 tracking-wide" x-text="item.titulo"></h4>
-                                        <p class="text-slate-400 leading-relaxed line-clamp-3" x-text="item.contenido"></p>
-                                        <template x-if="tienePermisoEdicionPasosPerdidos()">
-                                            <button @click.stop="eliminarTarjeta('masoneria', index)" class="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 bg-red-950 text-red-400 border border-red-900/50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold transition hover:bg-red-900 hover:text-white">Eliminar</button>
-                                        </template>
-                                    </div>
-                                </template>
-                                <template x-for="(item, index) in tarjetasReactivas.educacion" :key="'umb-edu-'+index">
-                                    <div @click="trazadoSeleccionado = item" class="bg-slate-900/60 border border-slate-800 p-4 rounded-lg relative group/card flex flex-col justify-between cursor-pointer hover:border-amber-500/40 transition">
-                                        <div>
-                                            <span class="text-[9px] uppercase font-mono text-blue-400/70 block mb-1">Categoría: Educación</span>
-                                            <template x-if="item.imagen">
-                                                <img :src="item.imagen" alt="Imagen Educación" class="w-full h-28 object-cover rounded mb-2 border border-slate-800">
-                                            </template>
-                                            <h4 class="font-bold text-slate-200 uppercase mb-2 tracking-wide" x-text="item.titulo"></h4>
-                                            <p class="text-slate-400 leading-relaxed line-clamp-3" x-text="item.contenido"></p>
-                                        </div>
-                                        <template x-if="item.enlace">
-                                            <span class="text-amber-500/80 hover:text-amber-400 underline mt-2 block font-medium" x-text="item.textoEnlace"></span>
-                                        </template>
-                                        <template x-if="tienePermisoEdicionPasosPerdidos()">
-                                            <button @click.stop="eliminarTarjeta('educacion', index)" class="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 bg-red-950 text-red-400 border border-red-900/50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold transition hover:bg-red-900 hover:text-white">Eliminar</button>
-                                        </template>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div class="flex items-center space-x-2 border-b border-slate-900 pb-2">
-                                <span class="text-base">✍️</span>
-                                <h3 class="font-serif text-base font-bold text-amber-400 uppercase tracking-wider">Trazados Grabados en el Umbral</h3>
-                            </div>
-                            <div class="grid grid-cols-1 gap-4 text-xs">
-                                <template x-for="(trazado, index) in trazadosFiltrados" :key="'traz-'+index">
-                                    <div @click="trazadoSeleccionado = trazado" class="bg-slate-950/60 border border-slate-900 p-5 rounded-xl space-y-2 relative cursor-pointer hover:border-amber-500/40 transition group/trazado shadow-md hover:shadow-xl">
-                                        <template x-if="trazado.imagen">
-                                            <img :src="trazado.imagen" alt="Imagen Trazado" class="w-full h-40 object-cover rounded-lg mb-2 border border-slate-800">
-                                        </template>
-                                        <div class="flex justify-between items-center text-[10px] uppercase font-mono text-slate-500">
-                                            <span x-text="'Autor: ' + trazado.autor"></span>
-                                            <div class="flex items-center gap-2">
-                                                <span class="opacity-0 group-hover/trazado:opacity-100 text-amber-400 text-[9px] uppercase font-bold transition tracking-wider">📖 Lectura Profunda</span>
-                                                <span x-text="trazado.fecha"></span>
-                                            </div>
-                                        </div>
-                                        <h4 class="font-serif text-sm font-bold text-slate-200 group-hover:text-amber-400 transition" x-text="trazado.titulo"></h4>
-                                        <p class="text-slate-400 leading-relaxed whitespace-pre-line line-clamp-3 group-hover:text-slate-300 transition" x-text="trazado.contenido"></p>
-                                        
-                                        <template x-if="tienePermisoEliminarTrazados()">
-                                            <button @click.stop="eliminarTrazado(trazado.idIndex)" class="mt-2 bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-900/60 px-2 py-1 rounded text-[9px] uppercase font-bold transition">
-                                                🗑️ Eliminar Trazado
-                                            </button>
-                                        </template>
-                                    </div>
-                                </template>
-                                <template x-if="trazadosFiltrados.length === 0">
-                                    <p class="text-slate-500 italic text-center py-2">No hay trazados visibles para tu grado en este momento.</p>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </template>
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+            🏛️
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-2">Principios Fundamentales</h3>
+          <p class="text-slate-600 text-sm leading-relaxed mb-4">
+            Cultivamos la fraternidad, la tolerancia, la libertad de pensamiento y la filantropía. Trabajamos para desbastar la piedra bruta en busca de la verdad.
+          </p>
         </div>
-    `,
-
-    // =====================================================================
-    // 🔄 CÁMARA 8: RECUPERACIÓN DE CONTRASEÑA
-    // =====================================================================
-    recuperar_password: `
-        <div class="max-w-md mx-auto space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-900 pb-4">
-                <div>
-                    <h2 class="font-serif text-xl font-bold text-slate-100">Restaurar Credenciales</h2>
-                    <p class="text-[10px] uppercase tracking-widest text-slate-500">Reemplazo Seguro de Palabra Clave</p>
-                </div>
-                <button @click="cambiarVista('umbral')" class="text-xs text-slate-400 hover:text-amber-500 transition">✕ Volver</button>
-            </div>
-            <form @submit.prevent="restablecerPassword()" class="bg-slate-950/50 border border-slate-900 p-6 rounded-xl space-y-4 shadow-xl">
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium">Ingresa tu Usuario</label>
-                    <input type="text" x-model="recuperarDatos.usuario" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase text-slate-400 font-medium">Tu Respuesta Archivada (Película Favorita)</label>
-                    <input type="text" x-model="recuperarDatos.respuesta_secreta" required placeholder="Verificar identidad" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                </div>
-                <div class="pt-2 border-t border-slate-900 space-y-3">
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase text-slate-400 font-medium">Nueva Contraseña</label>
-                        <input type="password" x-model="recuperarDatos.nueva_password" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-widest py-2.5 rounded-lg text-xs transition shadow-lg">
-                    Reemplazar Contraseña e Ir al Umbral
-                </button>
-            </form>
+        <div class="text-xs font-bold text-amber-600 flex items-center gap-1 pt-2 border-t border-slate-100">
+          <span x-text="categoriaPasosPerdidos === 'principios' ? '✓ Viendo sección' : 'Explorar artículos →'"></span>
         </div>
-    `,
+      </div>
 
-    // =====================================================================
-    // 📜 CÁMARA 9: INTRANET DE ADMINISTRACIÓN (EL TALLER INTERNO)
-    // =====================================================================
-    admin: `
-        <div class="space-y-6">
-            <div class="bg-gradient-to-r from-slate-950 via-slate-950 to-amber-950/20 border border-slate-900 p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h2 class="font-serif text-xl font-bold text-slate-100" x-text="'Cámara Interna — ' + (usuarioLogueado?.nombre || 'Oficial')"></h2>
-                    <p class="text-[10px] uppercase tracking-widest text-slate-500" x-text="'Rol Activo: ' + usuarioLogueado?.rol_etiqueta"></p>
+      <!-- Tarjeta 2: Docencia y Tradición -->
+      <div @click="categoriaPasosPerdidos = (categoriaPasosPerdidos === 'docencia' ? 'todos' : 'docencia')"
+           :class="categoriaPasosPerdidos === 'docencia' ? 'ring-2 ring-amber-500 bg-amber-50/30 shadow-lg -translate-y-1' : 'bg-white hover:shadow-lg hover:-translate-y-1'"
+           class="p-6 rounded-xl shadow-md border-t-4 border-amber-500 transition-all duration-300 cursor-pointer flex flex-col justify-between select-none">
+        <div>
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+            📖
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-2">Docencia y Tradición</h3>
+          <p class="text-slate-600 text-sm leading-relaxed mb-4">
+            Preservamos el simbolismo ritualista como vehículo pedagógico para transmitir enseñanzas morales y filosóficas universales a través de los grados.
+          </p>
+        </div>
+        <div class="text-xs font-bold text-amber-600 flex items-center gap-1 pt-2 border-t border-slate-100">
+          <span x-text="categoriaPasosPerdidos === 'docencia' ? '✓ Viendo sección' : 'Filosofía e historia →'"></span>
+        </div>
+      </div>
+
+      <!-- Tarjeta 3: Acción Exterior -->
+      <div @click="categoriaPasosPerdidos = (categoriaPasosPerdidos === 'accion' ? 'todos' : 'accion')"
+           :class="categoriaPasosPerdidos === 'accion' ? 'ring-2 ring-amber-500 bg-amber-50/30 shadow-lg -translate-y-1' : 'bg-white hover:shadow-lg hover:-translate-y-1'"
+           class="p-6 rounded-xl shadow-md border-t-4 border-amber-500 transition-all duration-300 cursor-pointer flex flex-col justify-between select-none">
+        <div>
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+            🤝
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-2">Acción Exterior</h3>
+          <p class="text-slate-600 text-sm leading-relaxed mb-4">
+            Extendemos nuestra acción benéfica a la sociedad, promoviendo el progreso, la educación y el auxilio fraterno a quien lo necesite.
+          </p>
+        </div>
+        <div class="text-xs font-bold text-amber-600 flex items-center gap-1 pt-2 border-t border-slate-100">
+          <span x-text="categoriaPasosPerdidos === 'accion' ? '✓ Viendo sección' : 'Eventos filantrópicos →'"></span>
+        </div>
+      </div>
+
+      <!-- Tarjeta 4: Biblioteca Digital -->
+      <div @click="categoriaPasosPerdidos = (categoriaPasosPerdidos === 'biblioteca' ? 'todos' : 'biblioteca')"
+           :class="categoriaPasosPerdidos === 'biblioteca' ? 'ring-2 ring-amber-500 bg-amber-50/30 shadow-lg -translate-y-1' : 'bg-white hover:shadow-lg hover:-translate-y-1'"
+           class="p-6 rounded-xl shadow-md border-t-4 border-amber-500 transition-all duration-300 cursor-pointer flex flex-col justify-between select-none">
+        <div>
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+            📚
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-2">Biblioteca Digital</h3>
+          <p class="text-slate-600 text-sm leading-relaxed mb-4">
+            Recopilación de obras, trazados y literatura esencial. Accede y descarga documentos PDF en la nube para el estudio e instrucción.
+          </p>
+        </div>
+        <div class="text-xs font-bold text-amber-600 flex items-center gap-1 pt-2 border-t border-slate-100">
+          <span x-text="categoriaPasosPerdidos === 'biblioteca' ? '✓ Viendo sección' : 'Ver Libros / PDF →'"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Módulo de Publicaciones Dinámicas Filtradas -->
+    <section class="bg-slate-50 p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-2xl font-bold text-slate-800" x-text="
+              categoriaPasosPerdidos === 'principios' ? 'Principios Fundamentales' :
+              categoriaPasosPerdidos === 'docencia' ? 'Docencia y Tradición' :
+              categoriaPasosPerdidos === 'accion' ? 'Acción Exterior' :
+              categoriaPasosPerdidos === 'biblioteca' ? 'Biblioteca Digital' :
+              'Divulgación y Planchas Públicas'
+            "></h2>
+            <template x-if="categoriaPasosPerdidos !== 'todos'">
+              <button @click="categoriaPasosPerdidos = 'todos'" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded font-bold transition-colors">
+                Mostrar Todo
+              </button>
+            </template>
+          </div>
+          <p class="text-sm text-slate-500">
+            <span x-show="categoriaPasosPerdidos === 'todos'">Trazados y publicaciones abiertas al mundo profano</span>
+            <span x-show="categoriaPasosPerdidos === 'principios'">Artículos sobre fraternidad, tolerancia y valores masónicos</span>
+            <span x-show="categoriaPasosPerdidos === 'docencia'">Ensayos e instrucción sobre filosofía e historia</span>
+            <span x-show="categoriaPasosPerdidos === 'accion'">Publicaciones de actividades y eventos filantrópicos</span>
+            <span x-show="categoriaPasosPerdidos === 'biblioteca'">Obras y documentos PDF disponibles en la nube</span>
+          </p>
+        </div>
+        <template x-if="tienePermisoEdicionPasosPerdidos()">
+          <button @click="abrirModalNuevaTarjeta()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 shadow self-start md:self-auto">
+            <span>+</span> Publicar Contenido
+          </button>
+        </template>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <template x-for="tarjeta in tarjetasFiltradasPasosPerdidos" :key="tarjeta.id">
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <span :class="{
+                  'bg-amber-100 text-amber-800': tarjeta.categoria === 'principios' || !tarjeta.categoria,
+                  'bg-blue-100 text-blue-800': tarjeta.categoria === 'docencia',
+                  'bg-emerald-100 text-emerald-800': tarjeta.categoria === 'accion',
+                  'bg-purple-100 text-purple-800': tarjeta.categoria === 'biblioteca'
+                }" class="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" x-text="
+                  tarjeta.categoria === 'principios' ? 'Principios' :
+                  tarjeta.categoria === 'docencia' ? 'Docencia' :
+                  tarjeta.categoria === 'accion' ? 'Acción Exterior' :
+                  tarjeta.categoria === 'biblioteca' ? 'Biblioteca PDF' : 'General'
+                "></span>
+              </div>
+              <h4 class="text-lg font-bold text-slate-800 mb-2" x-text="tarjeta.titulo"></h4>
+              <p class="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-3" x-text="tarjeta.contenido"></p>
+            </div>
+
+            <div>
+              <!-- Enlace de Descarga/Lectura en Nube para PDF (Biblioteca Digital) -->
+              <template x-if="tarjeta.urlPdf">
+                <div class="mb-4">
+                  <a :href="tarjeta.urlPdf" target="_blank" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs px-3 py-2 rounded-lg font-bold transition-colors shadow">
+                    <span>📄</span> Abrir / Descargar Documento PDF
+                  </a>
                 </div>
-                <button @click="generarCodigoPase()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-xl shadow transition duration-300">
-                    ⚒️ Labrar Pase Digital
+              </template>
+
+              <div class="flex justify-between items-center text-xs text-slate-400 border-t pt-3 border-slate-100">
+                <span x-text="tarjeta.autor"></span>
+                <span x-text="tarjeta.fecha"></span>
+              </div>
+            </div>
+
+            <template x-if="tienePermisoEdicionPasosPerdidos()">
+              <div class="absolute top-4 right-4 flex gap-2">
+                <button @click="eliminarTarjeta(tarjeta.id)" title="Eliminar Publicación" class="text-red-500 hover:text-red-700 text-xs font-bold bg-red-50 p-1 rounded">
+                  ✕
                 </button>
+              </div>
+            </template>
+          </div>
+        </template>
+        <template x-if="tarjetasFiltradasPasosPerdidos.length === 0">
+          <div class="col-span-2 text-center py-8 text-slate-400 italic text-sm bg-white rounded-xl border border-dashed border-slate-300">
+            No hay publicaciones grabadas aún en esta categoría.
+          </div>
+        </template>
+      </div>
+    </section>
+  `,
+
+  // 2. TOCAR PUERTA
+  tocar_puerta: `
+    <div class="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-md border border-slate-200">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">✊</div>
+        <h2 class="text-2xl font-bold text-slate-800">Tocar a la Puerta del Taller</h2>
+        <p class="text-slate-600 text-sm mt-1">Si deseas solicitar información o iniciar tu proceso de acercamiento, envíanos tu mensaje.</p>
+      </div>
+      <form @submit.prevent="enviarContacto()" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+          <input type="text" x-model="formContacto.nombre" placeholder="Ej: Juan Pérez" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm focus:ring-amber-500 focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+          <input type="email" x-model="formContacto.email" placeholder="ejemplo@correo.com" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm focus:ring-amber-500 focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Número Telefónico</label>
+          <input type="tel" x-model="formContacto.telefono" placeholder="Ej: +58 412 1234567" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm focus:ring-amber-500 focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Redes Sociales <span class="text-slate-400 text-xs font-normal">(Opcional)</span></label>
+          <input type="text" x-model="formContacto.redes" placeholder="Ej: IG: @usuario, FB: /usuario, TikTok: @usuario" class="w-full border-slate-300 rounded-lg p-2.5 border text-sm focus:ring-amber-500 focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Motivo / Mensaje</label>
+          <textarea x-model="formContacto.mensaje" rows="4" placeholder="Expresa tus inquietudes o motivos para contactar al Taller..." required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm focus:ring-amber-500 focus:border-amber-500"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-lg font-bold transition-colors shadow">
+          Enviar Solicitud
+        </button>
+      </form>
+    </div>
+  `,
+
+  // 3. PALABRA DE PASE
+  palabra_pase: `
+    <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md border border-slate-200">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">🔑</div>
+        <h2 class="text-2xl font-bold text-slate-800">Palabra de Pase</h2>
+        <p class="text-slate-500 text-sm mt-1">Consagración de cuenta mediante el código otorgado por el Venerable Maestro.</p>
+      </div>
+      <form @submit.prevent="consagrarCuenta()" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Código de Pase (Generado por el Trono / Webmaster)</label>
+          <input type="text" x-model="formRegistro.codigoPase" placeholder="EJ: TRONO149-XYZ" required class="w-full border-slate-300 rounded-lg p-2.5 border uppercase tracking-widest text-center font-mono font-bold text-amber-700 bg-amber-50/50">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Nombre Completo (Q:. H:.)</label>
+          <input type="text" x-model="formRegistro.nombre" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Grado Simbólico / R.E.A.A. Actual</label>
+          <select x-model="formRegistro.grado" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm font-medium bg-slate-50">
+            <template x-for="g in gradosREAA" :key="g.id">
+              <option :value="g.nombre" x-text="g.nombre"></option>
+            </template>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+          <input type="email" x-model="formRegistro.email" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Nueva Contraseña</label>
+          <input type="password" x-model="formRegistro.password" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Respuesta Secreta</label>
+          <p class="text-xs text-slate-500 mb-1">¿Cuál es tu película favorita?</p>
+          <input type="text" x-model="formRegistro.respuestaSecreta" placeholder="Tu película favorita" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+        </div>
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-amber-400 py-3 rounded-lg font-bold transition-colors shadow">
+          Validar y Registrar Cuenta
+        </button>
+      </form>
+    </div>
+  `,
+
+  // 4. UMBRAL (CÁMARA DE TRAZADOS Y BALOTAJE)
+  umbral: `
+    <template x-if="!usuarioLogueado">
+      <div>
+        <div x-show="!modoRecuperar" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md border border-slate-200">
+          <div class="text-center mb-6">
+            <div class="w-12 h-12 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">🏛️</div>
+            <h2 class="text-2xl font-bold text-slate-800">El Umbral</h2>
+            <p class="text-slate-500 text-sm mt-1">Identificación de acceso para miembros del Taller</p>
+          </div>
+          <form @submit.prevent="iniciarSesion()" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Usuario o Correo Electrónico</label>
+              <input type="text" x-model="formLogin.email" placeholder="webmaster o correo@ejemplo.com" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
             </div>
-
-            <!-- TABLA DE PASES GENERADOS -->
-            <div class="space-y-3">
-                <h3 class="font-serif text-sm font-bold text-slate-300 uppercase tracking-wider">Libro de Registro de Pases Digitales</h3>
-                <div class="overflow-x-auto bg-slate-950/60 border border-slate-900 rounded-xl shadow-lg">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-slate-900 bg-slate-950 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                                <th class="p-4">Palabra / Token</th>
-                                <th class="p-4">Columna Destino</th>
-                                <th class="p-4 text-center">Estado de Uso</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-xs text-slate-300 font-mono">
-                            <template x-for="pase in pasesGenerados" :key="pase.codigo">
-                                <tr class="border-b border-slate-900/50 hover:bg-slate-900/20 transition">
-                                    <td class="p-4 font-bold text-amber-400 tracking-wide" x-text="pase.codigo"></td>
-                                    <td class="p-4 uppercase text-slate-400 text-[11px]" x-text="pase.rol"></td>
-                                    <td class="p-4 text-center">
-                                        <span :class="pase.usado ? 'bg-red-950 text-red-400 border-red-900/30' : 'bg-emerald-950 text-emerald-400 border-emerald-900/30'" class="px-2 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold border" x-text="pase.usado ? 'Consagrado' : 'Disponible'"></span>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="block text-sm font-medium text-slate-700">Contraseña</label>
+                <button type="button" @click="modoRecuperar = true" class="text-xs text-amber-600 hover:underline font-medium">
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+              <input type="password" x-model="formLogin.password" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
             </div>
+            <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-lg font-bold transition-colors shadow">
+              Entrar al Taller
+            </button>
+          </form>
+        </div>
 
-            <!-- CANTERA DE MIEMBROS -->
-            <template x-if="['trono_supremo', 'venerable_maestro'].includes(usuarioLogueado?.rol)">
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-xl">
-                    <div class="border-b border-slate-800 pb-2 flex items-center space-x-2">
-                        <span class="text-base">👥</span>
-                        <div>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Cantera de Miembros Registrados</h3>
-                            <p class="text-[10px] text-slate-400">Usa los selectores para cambiar el rol estructural de cada hermano de forma inmediata.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs border-collapse">
-                            <thead>
-                                <tr class="border-b border-slate-800 text-[10px] uppercase text-slate-500 font-mono">
-                                    <th class="py-2 px-3">Hermano / Cuenta</th>
-                                    <th class="py-2 px-3">Rol Actual</th>
-                                    <th class="py-2 px-3 text-right">Asignar Nuevo Rol</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="(miembro, idx) in hermanosTaller" :key="idx">
-                                    <tr class="border-b border-slate-900/60 bg-slate-950/20 hover:bg-slate-950/60 transition">
-                                        <td class="py-3 px-3 font-medium text-slate-200" x-text="miembro.nombre"></td>
-                                        <td class="py-3 px-3">
-                                            <span :class="{
-                                                'bg-amber-500/10 text-amber-400 border-amber-500/30': miembro.rol === 'venerable_maestro',
-                                                'bg-blue-500/10 text-blue-400 border-blue-500/20': ['primer_vigilante', 'segundo_vigilante'].includes(miembro.rol),
-                                                'bg-slate-800 text-slate-400 border-slate-700': ['maestro', 'companero', 'aprendiz'].includes(miembro.rol)
-                                            }" class="text-[9px] uppercase font-mono tracking-wider px-2 py-0.5 rounded border" x-text="miembro.rol.replace('_', ' ')"></span>
-                                        </td>
-                                        <td class="py-3 px-3 text-right">
-                                            <template x-if="miembro.rol === 'venerable_maestro'">
-                                                <div class="flex justify-end gap-1 items-center">
-                                                    <template x-if="usuarioLogueado?.rol === 'trono_supremo'">
-                                                        <button @click="removerVenerable(idx)" class="bg-red-950/60 hover:bg-red-900 text-red-400 border border-red-900/50 px-2 py-1 rounded text-[10px] font-bold uppercase transition">Quitar Trono</button>
-                                                    </template>
-                                                    <template x-if="usuarioLogueado?.rol !== 'trono_supremo'">
-                                                        <span class="text-[9px] text-slate-600 uppercase font-mono tracking-widest">Inviolable</span>
-                                                    </template>
-                                                </div>
-                                            </template>
+        <div x-show="modoRecuperar" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md border border-slate-200">
+          <div class="text-center mb-6">
+            <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">🔓</div>
+            <h2 class="text-2xl font-bold text-slate-800">Recuperar Contraseña</h2>
+            <p class="text-slate-500 text-sm mt-1">Ingresa tu usuario o correo y valida tu respuesta secreta.</p>
+          </div>
+          <form @submit.prevent="procesarRecuperacion()" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Usuario o Correo Electrónico</label>
+              <input type="text" x-model="formRecuperar.email" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Respuesta Secreta</label>
+              <p class="text-xs text-slate-500 mb-1">¿Cuál es tu película favorita?</p>
+              <input type="text" x-model="formRecuperar.respuestaSecreta" placeholder="Tu respuesta registrada" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Nueva Contraseña</label>
+              <input type="password" x-model="formRecuperar.nuevaPassword" placeholder="Ingresa tu nueva clave" required class="w-full border-slate-300 rounded-lg p-2.5 border text-sm">
+            </div>
+            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-lg font-bold transition-colors shadow">
+              Restablecer Contraseña
+            </button>
+            <div class="text-center pt-2">
+              <button type="button" @click="modoRecuperar = false" class="text-xs text-slate-500 hover:text-slate-800 underline">
+                ← Volver al Inicio de Sesión
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </template>
 
-                                            <template x-if="miembro.rol !== 'venerable_maestro' && miembro.rol !== 'trono_supremo'">
-                                                <div class="flex justify-end gap-1 items-center">
-                                                    <template x-if="usuarioLogueado?.rol === 'trono_supremo'">
-                                                        <button @click="ascenderAVenerable(idx)" class="bg-amber-500 text-slate-950 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase hover:bg-amber-400 transition mr-2">Hacer VM</button>
-                                                    </template>
-                                                    
-                                                    <select @change="cambiarRolHermano(idx, $event.target.value)" class="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-amber-500 font-medium">
-                                                        <option value="" selected disabled>Seleccionar Rol...</option>
-                                                        <option value="primer_vigilante">1er Vigilante</option>
-                                                        <option value="segundo_vigilante">2do Vigilante</option>
-                                                        <option value="maestro">Maestro</option>
-                                                        <option value="companero">Compañero</option>
-                                                        <option value="aprendiz">Aprendiz</option>
-                                                    </select>
-                                                </div>
-                                            </template>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
+    <template x-if="usuarioLogueado">
+      <div class="space-y-8">
+        <!-- Pestañas Internas del Umbral -->
+        <div class="flex border-b border-slate-200">
+          <button @click="seccionUmbral = 'trazados'" 
+                  :class="seccionUmbral === 'trazados' ? 'border-amber-600 text-amber-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                  class="py-3 px-6 border-b-2 text-sm font-medium transition-colors">
+            📜 Cámara de Trazados
+          </button>
+          <button @click="seccionUmbral = 'balotaje'" 
+                  :class="seccionUmbral === 'balotaje' ? 'border-amber-600 text-amber-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                  class="py-3 px-6 border-b-2 text-sm font-medium transition-colors flex items-center gap-2">
+            <span>🗳️</span> Saco de Proposiciones / Balotaje
+          </button>
+        </div>
+
+        <!-- 1. VISTA CÁMARA DE TRAZADOS -->
+        <div x-show="seccionUmbral === 'trazados'" class="space-y-6">
+          <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div>
+              <h2 class="text-2xl font-bold text-slate-800">El Umbral - Cámara de Trazados</h2>
+              <p class="text-slate-500 text-sm">
+                Trabajos arquitectónicos e instrucción para: <span class="font-bold text-amber-600 capitalize" x-text="usuarioLogueado.grado"></span>
+              </p>
+            </div>
+            <button @click="abrirModalCrearTrazado()" class="bg-slate-900 text-amber-400 hover:bg-slate-800 px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow">
+              + Presentar Trazado
+            </button>
+          </div>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <template x-for="trazado in trazadosFiltrados" :key="trazado.id">
+              <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow relative">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded bg-amber-100 text-amber-800" x-text="trazado.grado"></span>
+                    <span class="text-xs text-slate-400" x-text="trazado.fecha"></span>
+                  </div>
+                  <h3 class="font-bold text-slate-800 text-lg mb-2" x-text="trazado.titulo"></h3>
+                  <p class="text-slate-600 text-sm line-clamp-3 mb-4" x-text="trazado.resumen"></p>
                 </div>
-            </template>
-
-            <!-- BALOTAJES Y VOTACIONES -->
-            <template x-if="!['aprendiz', 'companero'].includes(usuarioLogueado?.rol)">
-                <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-4">
-                    <div class="flex justify-between items-center border-b border-slate-900 pb-2">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">🗳️ Balotajes y Votaciones del Taller</h3>
-                        <template x-if="['trono_supremo', 'venerable_maestro'].includes(usuarioLogueado?.rol)">
-                            <button @click="abrirEditor('nueva_encuesta')" class="bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-slate-950 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded transition border border-amber-500/30">
-                                + Diseñar Balotaje
-                            </button>
-                        </template>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <template x-for="(encuesta, index) in encuestas" :key="index">
-                            <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl space-y-3 flex flex-col justify-between relative group/voto">
-                                <div>
-                                    <div class="flex justify-between items-center mb-1">
-                                        <span class="text-[9px] uppercase font-mono tracking-wider bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20" x-text="encuesta.categoria"></span>
-                                        <span class="text-[10px] text-slate-500 font-medium" x-text="'Total: ' + (encuesta.favor + encuesta.contra) + ' votos'"></span>
-                                    </div>
-                                    <h4 class="text-xs font-bold text-slate-200 leading-snug" x-text="encuesta.pregunta"></h4>
-                                </div>
-
-                                <div class="space-y-1.5 pt-2">
-                                    <div class="w-full bg-slate-950 h-2 rounded overflow-hidden flex border border-slate-900">
-                                        <div class="bg-emerald-500 transition-all duration-500" :style="'width: ' + calcularPorcentaje(encuesta.favor, encuesta.contra) + '%'"></div>
-                                        <div class="bg-red-500 transition-all duration-500" :style="'width: ' + (100 - calcularPorcentaje(encuesta.favor, encuesta.contra)) + '%'"></div>
-                                    </div>
-                                    <div class="flex justify-between text-[10px] font-mono text-slate-400">
-                                        <span class="text-emerald-400" x-text="'A favor: ' + encuesta.favor + ' (' + calcularPorcentaje(encuesta.favor, encuesta.contra) + '%)'"></span>
-                                        <span class="text-red-400" x-text="'En contra: ' + encuesta.contra + ' (' + (100 - calcularPorcentaje(encuesta.favor, encuesta.contra)) + '%)'"></span>
-                                    </div>
-                                </div>
-
-                                <div class="flex gap-2 pt-2 border-t border-slate-950">
-                                    <button @click="votar(index, 'favor')" class="flex-1 bg-emerald-950/40 hover:bg-emerald-900 border border-emerald-900/60 text-emerald-400 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition">👍 A Favor</button>
-                                    <button @click="votar(index, 'contra')" class="flex-1 bg-red-950/40 hover:bg-red-900 border border-red-900/60 text-red-400 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition">👎 En Contra</button>
-                                </div>
-
-                                <template x-if="['trono_supremo', 'venerable_maestro'].includes(usuarioLogueado?.rol)">
-                                    <button @click="eliminarEncuesta(index)" class="absolute -top-1 -right-1 opacity-0 group-hover/voto:opacity-100 bg-red-950 text-red-400 border border-red-900/40 px-1 py-0.5 rounded text-[8px] font-bold uppercase transition hover:bg-red-950">Eliminar</button>
-                                </template>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </template>
-
-            <!-- SOLICITUDES PENDIENTES (TOQUES DE PUERTA) -->
-            <template x-if="['trono_supremo', 'venerable_maestro', 'primer_vigilante', 'segundo_vigilante'].includes(usuarioLogueado?.rol)">
-                <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-3">
-                    <div class="border-b border-slate-900 pb-2">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">🚪 Solicitudes Pendientes (Toques de Puerta)</h3>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs border-collapse">
-                            <thead>
-                                <tr class="border-b border-slate-800 text-[10px] uppercase text-slate-500 font-mono">
-                                    <th class="py-2 px-3">Nombre / Cédula</th>
-                                    <th class="py-2 px-3">Contacto / Correo</th>
-                                    <th class="py-2 px-3">Motivo / Mensaje</th>
-                                    <th class="py-2 px-3 text-right">Acción Autorizada</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="(solicitud, index) in toquesDePuerta" :key="index">
-                                    <tr class="border-b border-slate-900 bg-slate-900/20 hover:bg-slate-900/40 transition">
-                                        <td class="py-3 px-3">
-                                            <div class="font-bold text-slate-200" x-text="solicitud.nombre"></div>
-                                            <div class="text-[10px] text-slate-500 font-mono" x-text="solicitud.cedula"></div>
-                                        </td>
-                                        <td class="py-3 px-3 text-slate-400">
-                                            <div x-text="solicitud.correo"></div>
-                                            <div class="text-[10px]" x-text="solicitud.telefono"></div>
-                                        </td>
-                                        <td class="py-3 px-3 text-slate-400 max-w-xs truncate" :title="solicitud.mensaje" x-text="solicitud.mensaje"></td>
-                                        <td class="py-3 px-3 text-right">
-                                            <template x-if="solicitud.estado === 'pendiente'">
-                                                <button @click="aprobarSolicitud(index)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded transition shadow-md">
-                                                    ⚒️ Labrar Código
-                                                </button>
-                                            </template>
-                                            <template x-if="solicitud.estado === 'aprobado'">
-                                                <span class="text-[10px] font-mono uppercase tracking-wider bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20" x-text="'Aprobado: ' + solicitud.codigo_generado"></span>
-                                            </template>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </template>
-
-            <!-- CHAT SELECTIVO MULTIGRADO -->
-            <div class="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-4">
-                <div class="border-b border-slate-900 pb-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Canal de Comunicación Multigrado</h3>
-                </div>
-                
-                <div class="bg-slate-950/80 border border-slate-900 rounded-lg p-4 h-48 overflow-y-auto space-y-3 font-mono text-xs">
-                    <template x-for="(msg, i) in historialChat" :key="i">
-                        <div class="flex items-start gap-2">
-                            <span class="text-amber-500 font-bold shrink-0" x-text="msg.autor"></span>
-                            <span class="text-slate-300 break-words" x-text="msg.texto"></span>
-                        </div>
+                <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                  <span class="text-xs text-slate-500 font-medium" x-text="trazado.autor"></span>
+                  <div class="flex items-center gap-2">
+                    <template x-if="esAdministradorOWebmaster()">
+                      <button @click="eliminarTrazado(trazado.id)" title="Eliminar Trazado" class="text-red-500 hover:text-red-700 text-xs font-bold">
+                        ✕
+                      </button>
                     </template>
+                    <button @click="verTrazadoCompleto(trazado)" class="text-xs text-amber-600 font-bold hover:underline">Leer Más →</button>
+                  </div>
                 </div>
-
-                <form @submit.prevent="enviarMensajeChat()" class="flex gap-2">
-                    <input type="text" x-model="nuevoMensajeTexto" placeholder="Escribe un mensaje en el canal..." class="flex-grow bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition">
-                    <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs uppercase tracking-wider transition">
-                        Enviar
-                    </button>
-                </form>
-            </div>
+              </div>
+            </template>
+          </div>
         </div>
-    `
+
+        <!-- 2. VISTA SECCIÓN DE BALOTAJE -->
+        <div x-show="seccionUmbral === 'balotaje'" class="space-y-6">
+          <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div>
+              <h2 class="text-2xl font-bold text-slate-800">Escrutinio y Balotaje Secreto</h2>
+              <p class="text-slate-500 text-sm">Procesos de votación para admisiones y aumentos de salario.</p>
+            </div>
+            <template x-if="esAdministradorOWebmaster()">
+              <button @click="abrirModalCrearBalotaje()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow">
+                + Iniciar Balotaje
+              </button>
+            </template>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <template x-for="b in listaBalotajes" :key="b.id">
+              <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative">
+                <div class="flex justify-between items-start mb-2">
+                  <h3 class="font-bold text-slate-800 text-lg" x-text="b.candidato"></h3>
+                  <span :class="b.activo ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'" 
+                        class="text-xs font-bold px-2 py-1 rounded uppercase tracking-wider" 
+                        x-text="b.activo ? 'En Curso' : 'Cerrado'"></span>
+                </div>
+                <p class="text-xs text-amber-700 font-bold uppercase mb-2" x-text="b.motivo"></p>
+                <p class="text-slate-600 text-sm mb-3" x-text="b.descripcion"></p>
+
+                <!-- Fechas del Balotaje -->
+                <template x-if="b.fechaInicio || b.fechaFin">
+                  <div class="flex items-center gap-4 text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
+                    <span x-show="b.fechaInicio"><b>Inicio:</b> <span x-text="b.fechaInicio"></span></span>
+                    <span x-show="b.fechaFin"><b>Fin:</b> <span x-text="b.fechaFin"></span></span>
+                  </div>
+                </template>
+
+                <!-- Área de Votación -->
+                <template x-if="b.activo">
+                  <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mt-4">
+                    <p class="text-xs font-bold text-slate-700 mb-3 text-center">Emitir Balota Secreta:</p>
+                    <div class="flex gap-4 justify-center">
+                      <button @click="emitirVotoBalotaje(b.id, 'blanca')" class="bg-white hover:bg-slate-100 border-2 border-slate-300 text-slate-800 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 shadow-sm">
+                        ⚪ Bola Blanca (A favor)
+                      </button>
+                      <button @click="emitirVotoBalotaje(b.id, 'negra')" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 shadow-sm">
+                        ⚫ Bola Negra (En contra)
+                      </button>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Informe para Webmaster/Trono -->
+                <template x-if="esAdministradorOWebmaster()">
+                  <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                    <div>
+                      <span>Resultados: </span>
+                      <span class="font-bold text-slate-800" x-text="'⚪ ' + b.blancas + ' / ⚫ ' + b.negras"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button x-show="b.activo" @click="cerrarBalotaje(b.id)" class="text-red-600 font-bold hover:underline">
+                        Cerrar Escrutinio
+                      </button>
+                      <button x-show="!b.activo" @click="eliminarBalotaje(b.id)" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded text-xs font-bold transition-colors">
+                        🗑️ Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </template>
+  `,
+
+  // 5. PERFIL DEL TRONO / WEBMASTER
+  admin: `
+    <div class="space-y-8">
+      <div class="bg-slate-900 text-white p-6 rounded-xl border border-amber-500/30 flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-amber-400">Perfil del Trono - Administración Gremial</h2>
+          <p class="text-slate-300 text-sm">Panel de control exclusivo del Venerable Maestro y Webmaster del Taller.</p>
+        </div>
+        <span class="bg-amber-500/20 text-amber-400 text-xs px-3 py-1.5 rounded-full border border-amber-500/40 font-mono capitalize" x-text="usuarioLogueado ? usuarioLogueado.rol.replace('_', ' ') : 'Trono del Venerable'"></span>
+      </div>
+
+      <!-- Solicitudes de Tocar Puerta Pendientes -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-800 mb-2">Solicitudes en Puerta (Mensajes Profanos)</h3>
+        <p class="text-slate-500 text-sm mb-4">Registro de mensajes recibidos a través de la opción 'Tocar Puerta'. Genera la palabra de pase para admitir al aspirante.</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-100 text-slate-600 font-semibold uppercase text-xs">
+              <tr>
+                <th class="p-3">Nombre</th>
+                <th class="p-3">Contacto</th>
+                <th class="p-3">Redes</th>
+                <th class="p-3">Mensaje</th>
+                <th class="p-3 text-center">Acciones / Admitir</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <template x-for="sol in listaSolicitudesContacto" :key="sol.id">
+                <tr>
+                  <td class="p-3 font-medium text-slate-800" x-text="sol.nombre"></td>
+                  <td class="p-3 text-slate-600">
+                    <div x-text="sol.email"></div>
+                    <div class="text-xs text-slate-400" x-text="sol.telefono"></div>
+                  </td>
+                  <td class="p-3 text-slate-600 text-xs" x-text="sol.redes || 'N/A'"></td>
+                  <td class="p-3 text-slate-600 text-xs leading-snug" x-text="sol.mensaje"></td>
+                  <td class="p-3 text-center">
+                    <template x-if="!sol.codigoGenerado">
+                      <button @click="generarCodigoParaAspirante(sol)" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow">
+                        🔑 Generar Código
+                      </button>
+                    </template>
+                    <template x-if="sol.codigoGenerado">
+                      <div class="inline-flex flex-col items-center">
+                        <span class="bg-amber-50 text-amber-800 font-mono font-bold text-xs px-2 py-1 rounded border border-amber-300" x-text="sol.codigoGenerado"></span>
+                        <span class="text-[10px] text-green-600 font-semibold mt-1">✓ Código Generado</span>
+                      </div>
+                    </template>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Aspirantes Admitidos e Iniciados -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex justify-between items-center mb-2">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800">Aspirantes Admitidos e Iniciados</h3>
+            <p class="text-slate-500 text-sm">Hermanos consagrados mediante Palabra de Pase. Puedes ajustar el Grado asignado o eliminar el registro si es necesario.</p>
+          </div>
+          <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-bold" x-text="aspirantesRegistrados.length + ' Confirmados'"></span>
+        </div>
+        
+        <div class="overflow-x-auto mt-4">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-100 text-slate-600 font-semibold uppercase text-xs">
+              <tr>
+                <th class="p-3">Querido Hermano</th>
+                <th class="p-3">Correo Confirmado</th>
+                <th class="p-3 text-center">Grado del Q:. H:.</th>
+                <th class="p-3">Fecha de Ingreso</th>
+                <th class="p-3 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <template x-for="asp in aspirantesRegistrados" :key="asp.id">
+                <tr>
+                  <td class="p-3 font-medium text-slate-800 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span x-text="'Q:. H:. ' + asp.nombre"></span>
+                  </td>
+                  <td class="p-3 text-slate-600 font-mono text-xs" x-text="asp.email"></td>
+                  <td class="p-3 text-center">
+                    <span class="bg-amber-100 text-amber-800 font-semibold text-xs px-2.5 py-1 rounded-full border border-amber-300 inline-flex items-center gap-1">
+                      <span>📐</span> <span x-text="asp.grado"></span>
+                    </span>
+                  </td>
+                  <td class="p-3 text-slate-500 text-xs" x-text="asp.fechaRegistro"></td>
+                  <td class="p-3 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                      <button @click="editarGradoAdmitido(asp)" class="bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 border border-slate-300 px-2.5 py-1 rounded text-xs font-bold transition-colors">
+                        ✏️ Editar Grado
+                      </button>
+                      <button @click="eliminarAspiranteAdmitido(asp)" title="Eliminar Aspirante" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2.5 py-1 rounded text-xs font-bold transition-colors">
+                        🗑️ Eliminar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <template x-if="aspirantesRegistrados.length === 0">
+                <tr>
+                  <td colspan="5" class="p-4 text-center text-slate-400 text-xs italic">
+                    Aún no hay hermanos registrados con Palabra de Pase.
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cuadro Logial con Webmaster Fijo e Inmutable -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Gestión de Cantera y Cuadro Logial</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-100 text-slate-600 font-semibold uppercase text-xs">
+              <tr>
+                <th class="p-3">Hermano</th>
+                <th class="p-3">Grado Actual</th>
+                <th class="p-3">Rol</th>
+                <th class="p-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <template x-for="hermano in listaHermanos" :key="hermano.id">
+                <tr>
+                  <td class="p-3 font-medium text-slate-800" x-text="hermano.nombre"></td>
+                  <td class="p-3 font-bold text-amber-700" x-text="hermano.esFijo ? 'Webmaster' : hermano.grado"></td>
+                  <td class="p-3 text-slate-600 capitalize" x-text="hermano.rol.replace('_', ' ')"></td>
+                  <td class="p-3">
+                    <template x-if="!hermano.esFijo && hermano.rol !== 'webmaster'">
+                      <div class="flex items-center gap-2">
+                        <button @click="aumentarRolHermano(hermano)" title="Promover" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-2.5 py-1 rounded text-xs font-bold transition-colors">
+                          ▲ Subir
+                        </button>
+                        <button @click="disminuirRolHermano(hermano)" title="Reducir" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-xs font-bold transition-colors">
+                          ▼ Bajar
+                        </button>
+                        <button @click="editarRolDirecto(hermano)" class="text-amber-600 hover:underline font-bold text-xs ml-1">
+                          Editar
+                        </button>
+                        <button @click="eliminarHermanoCuadro(hermano)" title="Eliminar del Cuadro" class="text-red-500 hover:text-red-700 font-bold text-xs ml-2">
+                          🗑️ Eliminar
+                        </button>
+                      </div>
+                    </template>
+                    <template x-if="hermano.esFijo || hermano.rol === 'webmaster'">
+                      <span class="text-xs text-slate-400 font-semibold italic bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
+                        🔒 Perfil Único Fijo
+                      </span>
+                    </template>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
 };

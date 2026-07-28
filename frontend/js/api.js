@@ -4,11 +4,29 @@
 const apiConnection = {
     baseUrl: '/api',
     
+    getAuthToken() {
+        try {
+            const sesion = localStorage.getItem('lapis_sesion');
+            if (sesion) {
+                const parsed = JSON.parse(sesion);
+                return parsed.token || parsed.usuario || parsed.email || '';
+            }
+        } catch (e) {
+            return '';
+        }
+        return '';
+    },
+
     async request(endpoint, options = {}) {
+        const token = this.getAuthToken();
         const defaultHeaders = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         };
+
+        if (token) {
+            defaultHeaders['Authorization'] = `Bearer ${token}`;
+        }
         
         const config = {
             ...options,
@@ -48,7 +66,16 @@ const apiConnection = {
         });
     },
 
+    async patch(endpoint, body) {
+        return await this.request(endpoint, {
+            method: 'PATCH',
+            body: JSON.stringify(body)
+        });
+    },
+
     async delete(endpoint) {
         return await this.request(endpoint, { method: 'DELETE' });
     }
 };
+
+window.apiConnection = apiConnection;
