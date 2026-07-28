@@ -102,11 +102,73 @@ document.addEventListener('alpine:init', () => {
     formLogin: { email: '', password: '' },
     formRecuperar: { email: '', respuestaSecreta: '', nuevaPassword: '' },
 
+    // ==========================================
+    // 🛠️ MÉTODOS DE RED Y AUTENTICACIÓN
+    // ==========================================
+    obtenerToken() {
+      if (this.usuarioLogueado && this.usuarioLogueado.token) {
+        return this.usuarioLogueado.token;
+      }
+      const sesion = localStorage.getItem('lapis_sesion');
+      if (sesion) {
+        try {
+          const parsed = JSON.parse(sesion);
+          if (parsed && parsed.token) return parsed.token;
+        } catch (e) {}
+      }
+      return localStorage.getItem('token') || localStorage.getItem('lapis_token') || '';
+    },
+
+    async hacerPeticion(metodo, endpoint, datos = null) {
+      const token = this.obtenerToken();
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      if (window.apiConnection) {
+        try {
+          let res;
+          const m = metodo.toLowerCase();
+          if (m === 'get') {
+            res = await window.apiConnection.get(endpoint, { headers });
+          } else if (m === 'post') {
+            res = await window.apiConnection.post(endpoint, datos, { headers });
+          } else if (m === 'delete') {
+            res = await window.apiConnection.delete(endpoint, { headers });
+          } else if (m === 'patch') {
+            res = await window.apiConnection.patch ? await window.apiConnection.patch(endpoint, datos, { headers }) : null;
+          }
+          if (res) return res;
+        } catch (e) {
+          console.warn(`[API] Reintentando petición directa a ${endpoint}...`);
+        }
+      }
+
+      const opciones = {
+        method: metodo.toUpperCase(),
+        headers: headers
+      };
+      if (datos && (metodo.toUpperCase() === 'POST' || metodo.toUpperCase() === 'PUT' || metodo.toUpperCase() === 'PATCH')) {
+        opciones.body = JSON.stringify(datos);
+      }
+
+      const respuesta = await fetch(endpoint, opciones);
+      if (!respuesta.ok) {
+        const errorData = await respuesta.json().catch(() => ({ detail: respuesta.statusText }));
+        throw new Error(errorData.detail || `Error ${respuesta.status}`);
+      }
+      return await respuesta.json();
+    },
+
+    // ==========================================
+    // 🚀 CICLO DE VIDA Y SINCRONIZACIÓN
+    // ==========================================
     async init() {
-      // Registrar e incrementar el contador global en FastAPI
       await this.sincronizarVisitas();
 
-      // Sincronización automática periódica (Polling) cada 10 segundos
       setInterval(async () => {
         await this.sincronizarVisitas();
         if (this.usuarioLogueado) {
@@ -124,6 +186,9 @@ document.addEventListener('alpine:init', () => {
             parsed.grado = 'Webmaster';
           }
           this.usuarioLogueado = parsed;
+          if (parsed.token) {
+            localStorage.setItem('token', parsed.token);
+          }
         } catch (e) {
           localStorage.removeItem('lapis_sesion');
         }
@@ -138,62 +203,38 @@ document.addEventListener('alpine:init', () => {
     },
 
     async sincronizarVisitas() {
-      if (window.apiConnection) {
-        try {
-          // Uso de ?t=Date.now() para desactivar el caché móvil de Safari y Chrome
-          const res = await window.apiConnection.get('/pasos-perdidos/visitas?t=' + Date.now());
-          if (res && res.visitas !== undefined) {
-            this.contadorVisitas = res.visitas;
-            localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
-          }
-        } catch (e) {
-          console.warn('Servidor offline, utilizando contador local.');
-          let visitasLocales = localStorage.getItem('lapis_contador_visitas');
-          this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) : 1;
+      try {
+        const res = await this.hacerPeticion('GET', '/pasos-perdidos/visitas?t=' + Date.now());
+        if (res && res.visitas !== undefined) {
+          this.contadorVisitas = res.visitas;
+          localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
         }
-      } else {
+      } catch (e) {
         let visitasLocales = localStorage.getItem('lapis_contador_visitas');
         this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) : 1;
       }
     },
 
-    // Carga robusta desde la API Backend
+    // ==========================================
+    // 🏛️ PASOS PERDIDOS
+    // ==========================================
     async cargarPasosPerdidos() {
-      let publicaciones = [];
-      
-      if (window.apiConnection) {
-        try {
-          const remotePasos = await window.apiConnection.get('/pasos-perdidos?t=' + Date.now());
-          if (remotePasos && Array.isArray(remotePasos)) {
-            publicaciones = remotePasos.map(p => ({
-              id: p.id,
-              titulo: p.titulo,
-              categoria: p.categoria,
-              contenido: p.contenido,
-              urlPdf: p.url_pdf || null,
-              autor: p.autor || 'Institucional',
-              fecha: p.fecha ? p.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
-            }));
-          }
-        } catch (e) {
-          console.warn('Backend API no disponible para Pasos Perdidos.');
+      try {
+        const remotePasos = await this.hacerPeticion('GET', '/pasos-perdidos?t=' + Date.now());
+        if (remotePasos && Array.isArray(remotePasos)) {
+          this.tarjetasDinamicas = remotePasos.map(p => ({
+            id: p.id,
+            titulo: p.titulo,
+            categoria: p.categoria,
+            contenido: p.contenido,
+            urlPdf: p.url_pdf || null,
+            autor: p.autor || 'Institucional',
+            fecha: p.fecha ? p.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
+          }));
         }
+      } catch (e) {
+        console.warn('Backend API no disponible para Pasos Perdidos.');
       }
-
-      const localesGuardados = localStorage.getItem('lapis_pasos_locales');
-      let publicacionesLocales = [];
-      if (localesGuardados) {
-        try {
-          publicacionesLocales = JSON.parse(localesGuardados);
-        } catch (e) {
-          publicacionesLocales = [];
-        }
-      }
-
-      const idsServidor = new Set(publicaciones.map(p => p.id));
-      const localesNoDuplicadas = publicacionesLocales.filter(p => !idsServidor.has(p.id));
-      
-      this.tarjetasDinamicas = [...publicaciones, ...localesNoDuplicadas];
 
       if (this.tarjetasDinamicas.length === 0) {
         this.tarjetasDinamicas = [
@@ -208,16 +249,6 @@ document.addEventListener('alpine:init', () => {
           }
         ];
       }
-    },
-
-    guardarPublicacionEnLocalStorage(nuevaTarjeta) {
-      let locales = [];
-      const datosGuardados = localStorage.getItem('lapis_pasos_locales');
-      if (datosGuardados) {
-        try { locales = JSON.parse(datosGuardados); } catch (e) { locales = []; }
-      }
-      locales.unshift(nuevaTarjeta);
-      localStorage.setItem('lapis_pasos_locales', JSON.stringify(locales));
     },
 
     async abrirModalNuevaTarjeta() {
@@ -267,46 +298,45 @@ document.addEventListener('alpine:init', () => {
 
       if (formValues) {
         const [categoria, titulo, contenido, urlPdf] = formValues;
-        const nuevaTarjeta = {
-          id: Date.now(),
-          categoria: categoria,
-          titulo: titulo,
-          contenido: contenido,
-          urlPdf: urlPdf || null,
-          autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
-          fecha: new Date().toISOString().split('T')[0]
-        };
 
-        let guardadoEnBackend = false;
+        try {
+          const res = await this.hacerPeticion('POST', '/pasos-perdidos', {
+            titulo: titulo,
+            contenido: contenido,
+            categoria: categoria,
+            url_pdf: urlPdf || null
+          });
 
-        if (window.apiConnection) {
-          try {
-            const res = await window.apiConnection.post('/pasos-perdidos', {
-              titulo: titulo,
-              contenido: contenido,
-              categoria: categoria,
-              url_pdf: urlPdf || null
-            });
-            if (res && res.id) nuevaTarjeta.id = res.id;
-            guardadoEnBackend = true;
-          } catch (e) {
-            console.warn('API POST no respondió adecuadamente. Guardando en persistencia local.');
-          }
+          const nuevaTarjeta = {
+            id: res.id,
+            categoria: res.categoria || categoria,
+            titulo: res.titulo || titulo,
+            contenido: res.contenido || contenido,
+            urlPdf: res.url_pdf || urlPdf || null,
+            autor: res.autor || (this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster'),
+            fecha: res.fecha ? res.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
+          };
+
+          this.tarjetasDinamicas.unshift(nuevaTarjeta);
+          this.categoriaPasosPerdidos = categoria;
+
+          Swal.fire({
+            icon: 'success',
+            title: '¡Publicado en Servidor!',
+            text: 'La publicación se ha guardado exitosamente en la base de datos.',
+            timer: 2200,
+            showConfirmButton: false
+          });
+
+        } catch (e) {
+          console.error('Error al guardar en el servidor:', e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de Publicación',
+            text: e.message || 'No se pudo guardar la publicación en el servidor. Verifica tus permisos o vuelve a iniciar sesión.',
+            confirmButtonColor: '#b91c1c'
+          });
         }
-
-        this.tarjetasDinamicas.unshift(nuevaTarjeta);
-        this.guardarPublicacionEnLocalStorage(nuevaTarjeta);
-        this.categoriaPasosPerdidos = categoria;
-
-        Swal.fire({
-          icon: 'success',
-          title: guardadoEnBackend ? '¡Publicado en Servidor!' : '¡Publicado Localmente!',
-          text: guardadoEnBackend 
-            ? 'La publicación se ha guardado exitosamente en la base de datos.' 
-            : 'Publicación guardada localmente de forma permanente.',
-          timer: 2200,
-          showConfirmButton: false
-        });
       }
     },
 
@@ -333,52 +363,143 @@ document.addEventListener('alpine:init', () => {
       });
 
       if (result.isConfirmed) {
-        if (window.apiConnection) {
-          try {
-            await window.apiConnection.delete(`/pasos-perdidos/${id}`);
-          } catch (e) {
-            console.warn('Eliminando de almacenamiento local.');
-          }
-        }
-        
-        this.tarjetasDinamicas = this.tarjetasDinamicas.filter(t => t.id !== id);
-        
-        const locales = localStorage.getItem('lapis_pasos_locales');
-        if (locales) {
-          try {
-            const parsed = JSON.parse(locales).filter(t => t.id !== id);
-            localStorage.setItem('lapis_pasos_locales', JSON.stringify(parsed));
-          } catch (e) {}
-        }
+        try {
+          await this.hacerPeticion('DELETE', `/pasos-perdidos/${id}`);
+          this.tarjetasDinamicas = this.tarjetasDinamicas.filter(t => t.id !== id);
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Eliminado',
-          text: 'La publicación ha sido removida.',
-          timer: 1500,
-          showConfirmButton: false
-        });
+          Swal.fire({
+            icon: 'success',
+            title: 'Eliminado',
+            text: 'La publicación ha sido removida.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        } catch (e) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al eliminar',
+            text: e.message || 'No se pudo eliminar la publicación en el servidor.',
+            confirmButtonColor: '#b91c1c'
+          });
+        }
       }
     },
 
+    // ==========================================
+    // 📜 TRAZADOS
+    // ==========================================
     async cargarTrazados() {
-      if (window.apiConnection) {
-        try {
-          const remoteTrazados = await window.apiConnection.get('/trazados?t=' + Date.now());
-          if (remoteTrazados && Array.isArray(remoteTrazados)) {
-            this.trazados = remoteTrazados.map(t => ({
-              id: t.id,
-              titulo: t.titulo,
-              grado: t.camara_destino === 'companero' ? '2º - Compañero' : (t.camara_destino === 'maestro' ? '3º - Maestro' : '1º - Aprendiz'),
-              resumen: t.contenido.substring(0, 100) + '...',
-              contenido: t.contenido,
-              autor: t.autor,
-              fecha: t.fecha_publicacion ? t.fecha_publicacion.split('T')[0] : new Date().toISOString().split('T')[0]
-            }));
-            return;
+      try {
+        const remoteTrazados = await this.hacerPeticion('GET', '/trazados?t=' + Date.now());
+        if (remoteTrazados && Array.isArray(remoteTrazados)) {
+          this.trazados = remoteTrazados.map(t => ({
+            id: t.id,
+            titulo: t.titulo,
+            grado: t.camara_destino === 'companero' ? '2º - Compañero' : (t.camara_destino === 'maestro' ? '3º - Maestro' : '1º - Aprendiz'),
+            resumen: t.contenido.substring(0, 100) + '...',
+            contenido: t.contenido,
+            autor: t.autor,
+            fecha: t.fecha_publicacion ? t.fecha_publicacion.split('T')[0] : new Date().toISOString().split('T')[0]
+          }));
+        }
+      } catch (e) {
+        console.warn('Cargando trazados por defecto.');
+      }
+    },
+
+    async abrirModalCrearTrazado() {
+      const { value: formValues } = await Swal.fire({
+        title: 'Crear Trazado',
+        html:
+          '<input id="swal-trazado-titulo" class="swal2-input" placeholder="Título del Trazado">' +
+          '<select id="swal-trazado-grado" class="swal2-input">' +
+          '  <option value="1º - Aprendiz">1º - Aprendiz</option>' +
+          '  <option value="2º - Compañero">2º - Compañero</option>' +
+          '  <option value="3º - Maestro">3º - Maestro</option>' +
+          '</select>' +
+          '<input id="swal-trazado-resumen" class="swal2-input" placeholder="Resumen corto">' +
+          '<textarea id="swal-trazado-contenido" class="swal2-textarea" placeholder="Contenido completo del trazado"></textarea>',
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Ingresar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d97706',
+        preConfirm: () => {
+          const titulo = document.getElementById('swal-trazado-titulo').value;
+          const grado = document.getElementById('swal-trazado-grado').value;
+          const resumen = document.getElementById('swal-trazado-resumen').value;
+          const contenido = document.getElementById('swal-trazado-contenido').value;
+
+          if (!titulo || !resumen || !contenido) {
+            Swal.showValidationMessage('Todos los campos son obligatorios');
+            return false;
           }
+          return { titulo, grado, resumen, contenido };
+        }
+      });
+
+      if (formValues) {
+        try {
+          let camara = 'aprendiz';
+          if (formValues.grado.includes('Compañero')) camara = 'companero';
+          if (formValues.grado.includes('Maestro')) camara = 'maestro';
+
+          await this.hacerPeticion('POST', '/trazados', {
+            titulo: formValues.titulo,
+            contenido: formValues.contenido,
+            camara_destino: camara
+          });
+          await this.cargarTrazados();
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Trazado Grabado',
+            text: 'Ingresado al Umbral con éxito.',
+            timer: 2000,
+            showConfirmButton: false
+          });
         } catch (e) {
-          console.warn('Cargando trazados por defecto.');
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: e.message || 'No se pudo guardar el trazado.',
+            confirmButtonColor: '#b91c1c'
+          });
+        }
+      }
+    },
+
+    async eliminarTrazado(id) {
+      const result = await Swal.fire({
+        title: '¿Eliminar trazado?',
+        text: 'Deseas eliminar este trazado de la Cámara.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#b91c1c',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          await this.hacerPeticion('DELETE', `/trazados/${id}`);
+          this.trazados = this.trazados.filter(t => t.id !== id);
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Eliminado',
+            text: 'Trazado eliminado de la Cámara.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        } catch (e) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: e.message || 'No se pudo eliminar el trazado.',
+            confirmButtonColor: '#b91c1c'
+          });
         }
       }
     },
@@ -414,10 +535,12 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
+    // ==========================================
+    // ⚖️ BALOTAJES (VOTACIONES)
+    // ==========================================
     async cargarBalotajesBackend() {
-      if (!window.apiConnection) return;
       try {
-        const remoteBalotajes = await window.apiConnection.get('/balotajes?t=' + Date.now());
+        const remoteBalotajes = await this.hacerPeticion('GET', '/balotajes?t=' + Date.now());
         if (remoteBalotajes && Array.isArray(remoteBalotajes)) {
           this.listaBalotajes = remoteBalotajes.map(b => ({
             id: b.id,
@@ -436,6 +559,146 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    async abrirModalCrearBalotaje() {
+      const hoy = new Date().toISOString().split('T')[0];
+      const { value: formValues } = await Swal.fire({
+        title: 'Iniciar Proceso de Balotaje',
+        html:
+          '<input id="swal-balotaje-cand" class="swal2-input" placeholder="Nombre del Candidato o Cargo">' +
+          '<input id="swal-balotaje-motivo" class="swal2-input" placeholder="Motivo (ej. INICIACION / Aumento de Salario)">' +
+          '<textarea id="swal-balotaje-desc" class="swal2-textarea" placeholder="Observaciones o pregunta del Balotaje"></textarea>' +
+          '<div class="text-left mt-3"><label class="text-xs font-bold text-slate-600 block mb-1">Fecha de Inicio:</label><input id="swal-balotaje-inicio" type="date" class="swal2-input !mt-0 !w-full" value="' + hoy + '"></div>' +
+          '<div class="text-left mt-2"><label class="text-xs font-bold text-slate-600 block mb-1">Fecha Final:</label><input id="swal-balotaje-fin" type="date" class="swal2-input !mt-0 !w-full"></div>',
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Iniciar Balotaje',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d97706',
+        preConfirm: () => {
+          const candidato = document.getElementById('swal-balotaje-cand').value;
+          const motivo = document.getElementById('swal-balotaje-motivo').value;
+          const descripcion = document.getElementById('swal-balotaje-desc').value;
+          const fechaInicio = document.getElementById('swal-balotaje-inicio').value;
+          const fechaFin = document.getElementById('swal-balotaje-fin').value;
+
+          if (!candidato || !motivo || !fechaInicio || !fechaFin) {
+            Swal.showValidationMessage('Candidato, motivo y ambas fechas son obligatorios');
+            return false;
+          }
+          return { candidato, motivo, descripcion: descripcion || '', fechaInicio, fechaFin };
+        }
+      });
+
+      if (formValues) {
+        try {
+          await this.hacerPeticion('POST', '/balotajes', {
+            candidato: formValues.candidato,
+            motivo: formValues.motivo,
+            descripcion: formValues.descripcion,
+            fecha_inicio: formValues.fechaInicio,
+            fecha_fin: formValues.fechaFin
+          });
+          await this.cargarBalotajesBackend();
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Balotaje Iniciado',
+            text: 'Proceso de balotaje abierto exitosamente.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } catch (e) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: e.message || 'No se pudo iniciar el balotaje.',
+            confirmButtonColor: '#b91c1c'
+          });
+        }
+      }
+    },
+
+    async emitirVotoBalotaje(id, tipo) {
+      const balotaje = this.listaBalotajes.find(b => b.id === id);
+      if (balotaje && balotaje.activo) {
+        try {
+          await this.hacerPeticion('POST', `/balotajes/${id}/votar`, { voto: tipo, tipo_voto: tipo });
+          await this.cargarBalotajesBackend();
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Voto Depositado',
+            text: 'Tu balota ha sido depositada de manera secreta en el saco.',
+            timer: 1800,
+            showConfirmButton: false
+          });
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Voto No Registrado',
+            text: err.message || 'Error al procesar la balota.',
+            confirmButtonColor: '#b91c1c'
+          });
+        }
+      }
+    },
+
+    async cerrarBalotaje(id) {
+      const balotaje = this.listaBalotajes.find(b => b.id === id);
+      if (balotaje) {
+        try {
+          await this.hacerPeticion('PATCH', `/balotajes/${id}/cerrar`);
+        } catch (e) {}
+
+        balotaje.activo = false;
+
+        Swal.fire({
+          icon: 'info',
+          title: 'Escrutinio Cerrado',
+          html: `<div class="text-left"><p class="font-bold text-lg mb-2">Resultado Final:</p><ul class="list-disc pl-5"><li>Balotas Blancas: <span class="font-bold text-emerald-600">${balotaje.blancas}</span></li><li>Balotas Negras: <span class="font-bold text-red-600">${balotaje.negras}</span></li></ul></div>`,
+          confirmButtonColor: '#d97706'
+        });
+      }
+    },
+
+    async eliminarBalotaje(id) {
+      const result = await Swal.fire({
+        title: '¿Eliminar escrutinio?',
+        text: 'Esta acción eliminará el registro del balotaje permanentemente.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#b91c1c',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          await this.hacerPeticion('DELETE', `/balotajes/${id}`);
+          this.listaBalotajes = this.listaBalotajes.filter(b => b.id !== id);
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Eliminado',
+            text: 'El escrutinio ha sido eliminado.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        } catch (e) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: e.message || 'No se pudo eliminar el balotaje.',
+            confirmButtonColor: '#b91c1c'
+          });
+        }
+      }
+    },
+
+    // ==========================================
+    // 💬 CHAT INTERNO
+    // ==========================================
     puedeAccederSalaChat(sala) {
       if (!this.usuarioLogueado) return false;
       const rol = this.usuarioLogueado.rol || '';
@@ -473,6 +736,9 @@ document.addEventListener('alpine:init', () => {
       this.nuevoMensajeChat = '';
     },
 
+    // ==========================================
+    // 🔐 GESTIÓN DE PERMISOS Y SESIÓN
+    // ==========================================
     esAdministradorOWebmaster() {
       if (!this.usuarioLogueado) return false;
       const rol = this.usuarioLogueado.rol;
@@ -491,7 +757,7 @@ document.addEventListener('alpine:init', () => {
 
     get trazadosFiltrados() {
       if (!this.usuarioLogueado) return [];
-      
+
       const gradoUser = this.usuarioLogueado.grado || '';
       if (this.usuarioLogueado.rol === 'webmaster' || gradoUser === 'Webmaster' || gradoUser.includes('Maestro') || this.esAdministradorOWebmaster()) {
         return this.trazados;
@@ -516,50 +782,49 @@ document.addEventListener('alpine:init', () => {
         return;
       }
 
-      if (window.apiConnection) {
-        try {
-          const payload = {
-            usuario: inputUsuario.includes('@') ? inputUsuario.split('@')[0] : inputUsuario,
-            password: inputPassword
-          };
-          const respuesta = await window.apiConnection.post('/auth/login', payload);
-          
-          if (respuesta && respuesta.usuario) {
-            const esWebmaster = respuesta.usuario.rol === 'webmaster' || respuesta.usuario.usuario === 'webmaster';
-            this.usuarioLogueado = {
-              ...respuesta.usuario,
-              nombre: esWebmaster ? 'Webmaster' : (respuesta.usuario.nombre || respuesta.usuario.nombre_real),
-              grado: esWebmaster ? 'Webmaster' : respuesta.usuario.grado,
-              token: respuesta.token
-            };
-            localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
-            this.formLogin = { email: '', password: '' };
-            await this.cargarPasosPerdidos();
-            await this.cargarBalotajesBackend();
+      try {
+        const payload = {
+          usuario: inputUsuario.includes('@') ? inputUsuario.split('@')[0] : inputUsuario,
+          password: inputPassword
+        };
+        const respuesta = await this.hacerPeticion('POST', '/auth/login', payload);
 
-            Swal.fire({
-              icon: 'success',
-              title: '¡Bienvenido!',
-              text: 'Sesión iniciada correctamente',
-              timer: 2000,
-              showConfirmButton: false
-            });
-            return;
-          }
-        } catch (err) {
-          console.warn('Fallo la conexión API Backend, verificando catálogo local...');
+        if (respuesta && respuesta.usuario) {
+          const esWebmaster = respuesta.usuario.rol === 'webmaster' || respuesta.usuario.usuario === 'webmaster';
+          this.usuarioLogueado = {
+            ...respuesta.usuario,
+            nombre: esWebmaster ? 'Webmaster' : (respuesta.usuario.nombre || respuesta.usuario.nombre_real),
+            grado: esWebmaster ? 'Webmaster' : respuesta.usuario.grado,
+            token: respuesta.token
+          };
+          localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
+          localStorage.setItem('token', respuesta.token);
+          this.formLogin = { email: '', password: '' };
+          await this.cargarPasosPerdidos();
+          await this.cargarBalotajesBackend();
+
+          Swal.fire({
+            icon: 'success',
+            title: '¡Bienvenido!',
+            text: 'Sesión iniciada correctamente',
+            timer: 2000,
+            showConfirmButton: false
+          });
+          return;
         }
+      } catch (err) {
+        console.warn('Fallo inicio de sesión en backend:', err.message);
       }
 
-      const usuarioLocal = this.listaHermanos.find(h => 
-        (h.email && h.email.toLowerCase() === inputUsuario) || 
-        (h.nombre && h.nombre.toLowerCase() === inputUsuario) || 
+      const usuarioLocal = this.listaHermanos.find(h =>
+        (h.email && h.email.toLowerCase() === inputUsuario) ||
+        (h.nombre && h.nombre.toLowerCase() === inputUsuario) ||
         (h.rol && h.rol.toLowerCase() === inputUsuario)
       );
 
       if (usuarioLocal) {
-        const passCorrecta = usuarioLocal.password 
-          ? (inputPassword === usuarioLocal.password) 
+        const passCorrecta = usuarioLocal.password
+          ? (inputPassword === usuarioLocal.password)
           : (inputPassword === 'lapis123');
 
         if (passCorrecta) {
@@ -573,6 +838,7 @@ document.addEventListener('alpine:init', () => {
             token: 'test-token'
           };
           localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
+          localStorage.setItem('token', 'test-token');
           this.formLogin = { email: '', password: '' };
           await this.cargarBalotajesBackend();
 
@@ -595,293 +861,25 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    async generarCodigoParaAspirante(solicitud) {
-      let codigo = '';
-      if (window.apiConnection) {
-        try {
-          const resp = await window.apiConnection.post(`/contacto/${solicitud.id}/generar-codigo`);
-          if (resp && resp.codigo) {
-            codigo = resp.codigo;
-          }
-        } catch (err) {
-          const aleatorio = Math.random().toString(36).substring(2, 7).toUpperCase();
-          codigo = `TRONO149-${aleatorio}`;
-        }
-      } else {
-        const aleatorio = Math.random().toString(36).substring(2, 7).toUpperCase();
-        codigo = `TRONO149-${aleatorio}`;
-      }
-
-      solicitud.codigoGenerado = codigo;
+    cerrarSesion() {
+      this.usuarioLogueado = null;
+      this.modoRecuperar = false;
+      localStorage.removeItem('lapis_sesion');
+      localStorage.removeItem('token');
+      this.vistaActual = 'pasos_perdidos';
 
       Swal.fire({
         icon: 'info',
-        title: 'Palabra de Pase Generada',
-        html: `<p class="mb-2">Código para <b>${solicitud.nombre}</b>:</p><div class="p-3 bg-amber-100 font-mono text-xl text-amber-900 rounded font-bold border border-amber-300 select-all">${codigo}</div><p class="text-xs text-slate-500 mt-2">Entrega esta Palabra de Pase al aspirante para que realice su registro.</p>`,
-        confirmButtonColor: '#d97706'
+        title: 'Sesión Cerrada',
+        text: 'Has salido del sistema.',
+        timer: 1500,
+        showConfirmButton: false
       });
     },
 
-    async abrirModalCrearTrazado() {
-      const { value: formValues } = await Swal.fire({
-        title: 'Crear Trazado',
-        html:
-          '<input id="swal-trazado-titulo" class="swal2-input" placeholder="Título del Trazado">' +
-          '<select id="swal-trazado-grado" class="swal2-input">' +
-          '  <option value="1º - Aprendiz">1º - Aprendiz</option>' +
-          '  <option value="2º - Compañero">2º - Compañero</option>' +
-          '  <option value="3º - Maestro">3º - Maestro</option>' +
-          '</select>' +
-          '<input id="swal-trazado-resumen" class="swal2-input" placeholder="Resumen corto">' +
-          '<textarea id="swal-trazado-contenido" class="swal2-textarea" placeholder="Contenido completo del trazado"></textarea>',
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Ingresar',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#d97706',
-        preConfirm: () => {
-          const titulo = document.getElementById('swal-trazado-titulo').value;
-          const grado = document.getElementById('swal-trazado-grado').value;
-          const resumen = document.getElementById('swal-trazado-resumen').value;
-          const contenido = document.getElementById('swal-trazado-contenido').value;
-
-          if (!titulo || !resumen || !contenido) {
-            Swal.showValidationMessage('Todos los campos son obligatorios');
-            return false;
-          }
-          return { titulo, grado, resumen, contenido };
-        }
-      });
-
-      if (formValues) {
-        if (window.apiConnection) {
-          try {
-            let camara = 'aprendiz';
-            if (formValues.grado.includes('Compañero')) camara = 'companero';
-            if (formValues.grado.includes('Maestro')) camara = 'maestro';
-
-            await window.apiConnection.post('/trazados', {
-              titulo: formValues.titulo,
-              contenido: formValues.contenido,
-              camara_destino: camara
-            });
-            await this.cargarTrazados();
-          } catch (e) {
-            console.warn('Trazado guardado en memoria local.');
-            this.trazados.unshift({
-              id: Date.now(),
-              ...formValues,
-              autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
-              fecha: new Date().toISOString().split('T')[0]
-            });
-          }
-        }
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Trazado Grabado',
-          text: 'Ingresado al Umbral con éxito.',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      }
-    },
-
-    async eliminarTrazado(id) {
-      const result = await Swal.fire({
-        title: '¿Eliminar trazado?',
-        text: 'Deseas eliminar este trazado de la Cámara.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#b91c1c',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      });
-
-      if (result.isConfirmed) {
-        this.trazados = this.trazados.filter(t => t.id !== id);
-        if (window.apiConnection) {
-          try {
-            await window.apiConnection.delete(`/trazados/${id}`);
-          } catch (e) {
-            console.warn('Trazado eliminado localmente.');
-          }
-        }
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Eliminado',
-          text: 'Trazado eliminado de la Cámara.',
-          timer: 1500,
-          showConfirmButton: false
-        });
-      }
-    },
-
-    async abrirModalCrearBalotaje() {
-      const hoy = new Date().toISOString().split('T')[0];
-      const { value: formValues } = await Swal.fire({
-        title: 'Iniciar Proceso de Balotaje',
-        html:
-          '<input id="swal-balotaje-cand" class="swal2-input" placeholder="Nombre del Candidato o Cargo">' +
-          '<input id="swal-balotaje-motivo" class="swal2-input" placeholder="Motivo (ej. INICIACION / Aumento de Salario)">' +
-          '<textarea id="swal-balotaje-desc" class="swal2-textarea" placeholder="Observaciones o pregunta del Balotaje"></textarea>' +
-          '<div class="text-left mt-3"><label class="text-xs font-bold text-slate-600 block mb-1">Fecha de Inicio:</label><input id="swal-balotaje-inicio" type="date" class="swal2-input !mt-0 !w-full" value="' + hoy + '"></div>' +
-          '<div class="text-left mt-2"><label class="text-xs font-bold text-slate-600 block mb-1">Fecha Final:</label><input id="swal-balotaje-fin" type="date" class="swal2-input !mt-0 !w-full"></div>',
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Iniciar Balotaje',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#d97706',
-        preConfirm: () => {
-          const candidato = document.getElementById('swal-balotaje-cand').value;
-          const motivo = document.getElementById('swal-balotaje-motivo').value;
-          const descripcion = document.getElementById('swal-balotaje-desc').value;
-          const fechaInicio = document.getElementById('swal-balotaje-inicio').value;
-          const fechaFin = document.getElementById('swal-balotaje-fin').value;
-
-          if (!candidato || !motivo || !fechaInicio || !fechaFin) {
-            Swal.showValidationMessage('Candidato, motivo y ambas fechas son obligatorios');
-            return false;
-          }
-          return { candidato, motivo, descripcion: descripcion || '', fechaInicio, fechaFin };
-        }
-      });
-
-      if (formValues) {
-        if (window.apiConnection) {
-          try {
-            await window.apiConnection.post('/balotajes', {
-              candidato: formValues.candidato,
-              motivo: formValues.motivo,
-              descripcion: formValues.descripcion,
-              fecha_inicio: formValues.fechaInicio,
-              fecha_fin: formValues.fechaFin
-            });
-            await this.cargarBalotajesBackend();
-          } catch (e) {
-            console.warn('Balotaje guardado localmente.');
-            this.listaBalotajes.unshift({
-              id: Date.now(),
-              candidato: formValues.candidato,
-              motivo: formValues.motivo,
-              descripcion: formValues.descripcion,
-              activo: true,
-              fechaInicio: formValues.fechaInicio,
-              fechaFin: formValues.fechaFin,
-              blancas: 0,
-              negras: 0
-            });
-          }
-        }
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Balotaje Iniciado',
-          text: 'Proceso de balotaje abierto exitosamente.',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      }
-    },
-
-    async emitirVotoBalotaje(id, tipo) {
-      const balotaje = this.listaBalotajes.find(b => b.id === id);
-      if (balotaje && balotaje.activo) {
-        if (window.apiConnection) {
-          try {
-            await window.apiConnection.post(`/balotajes/${id}/votar`, { voto: tipo, tipo_voto: tipo });
-            await this.cargarBalotajesBackend();
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Voto Depositado',
-              text: 'Tu balota ha sido depositada de manera secreta en el saco.',
-              timer: 1800,
-              showConfirmButton: false
-            });
-          } catch (err) {
-            const msg = err.data && err.data.detail 
-              ? err.data.detail 
-              : 'Error al procesar la balota.';
-            
-            Swal.fire({
-              icon: 'error',
-              title: 'Voto No Registrado',
-              text: msg,
-              confirmButtonColor: '#b91c1c'
-            });
-          }
-        } else {
-          if (tipo === 'blanca') balotaje.blancas++;
-          if (tipo === 'negra') balotaje.negras++;
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Voto Depositado',
-            text: 'Tu balota ha sido depositada de manera secreta en el saco.',
-            timer: 1800,
-            showConfirmButton: false
-          });
-        }
-      }
-    },
-
-    async cerrarBalotaje(id) {
-      const balotaje = this.listaBalotajes.find(b => b.id === id);
-      if (balotaje) {
-        if (window.apiConnection) {
-          try {
-            await window.apiConnection.patch(`/balotajes/${id}/cerrar`);
-          } catch (e) {
-            console.warn('Balotaje cerrado localmente.');
-          }
-        }
-
-        balotaje.activo = false;
-        
-        Swal.fire({
-          icon: 'info',
-          title: 'Escrutinio Cerrado',
-          html: `<div class="text-left"><p class="font-bold text-lg mb-2">Resultado Final:</p><ul class="list-disc pl-5"><li>Balotas Blancas: <span class="font-bold text-emerald-600">${balotaje.blancas}</span></li><li>Balotas Negras: <span class="font-bold text-red-600">${balotaje.negras}</span></li></ul></div>`,
-          confirmButtonColor: '#d97706'
-        });
-      }
-    },
-
-    async eliminarBalotaje(id) {
-      const result = await Swal.fire({
-        title: '¿Eliminar escrutinio?',
-        text: 'Esta acción eliminará el registro del balotaje permanentemente.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#b91c1c',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      });
-
-      if (result.isConfirmed) {
-        this.listaBalotajes = this.listaBalotajes.filter(b => b.id !== id);
-        if (window.apiConnection) {
-          try {
-            await window.apiConnection.delete(`/balotajes/${id}`);
-          } catch (e) {
-            console.warn('Balotaje eliminado localmente.');
-          }
-        }
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Eliminado',
-          text: 'El escrutinio ha sido eliminado.',
-          timer: 1500,
-          showConfirmButton: false
-        });
-      }
-    },
-
+    // ==========================================
+    // ✊ CONTACTO Y REGISTRO
+    // ==========================================
     async enviarContacto() {
       const solicitud = {
         id: Date.now(),
@@ -889,15 +887,13 @@ document.addEventListener('alpine:init', () => {
         codigoGenerado: null
       };
 
-      if (window.apiConnection) {
-        try {
-          const resp = await window.apiConnection.post('/contacto', this.formContacto);
-          if (resp && resp.id) {
-            solicitud.id = resp.id;
-          }
-        } catch (err) {
-          console.warn('Contacto registrado localmente.');
+      try {
+        const resp = await this.hacerPeticion('POST', '/contacto', this.formContacto);
+        if (resp && resp.id) {
+          solicitud.id = resp.id;
         }
+      } catch (err) {
+        console.warn('Contacto guardado dinámicamente.');
       }
 
       this.listaSolicitudesContacto.unshift(solicitud);
@@ -913,6 +909,28 @@ document.addEventListener('alpine:init', () => {
       this.vistaActual = 'pasos_perdidos';
     },
 
+    async generarCodigoParaAspirante(solicitud) {
+      let codigo = '';
+      try {
+        const resp = await this.hacerPeticion('POST', `/contacto/${solicitud.id}/generar-codigo`);
+        if (resp && resp.codigo) {
+          codigo = resp.codigo;
+        }
+      } catch (err) {
+        const aleatorio = Math.random().toString(36).substring(2, 7).toUpperCase();
+        codigo = `TRONO149-${aleatorio}`;
+      }
+
+      solicitud.codigoGenerado = codigo;
+
+      Swal.fire({
+        icon: 'info',
+        title: 'Palabra de Pase Generada',
+        html: `<p class="mb-2">Código para <b>${solicitud.nombre}</b>:</p><div class="p-3 bg-amber-100 font-mono text-xl text-amber-900 rounded font-bold border border-amber-300 select-all">${codigo}</div><p class="text-xs text-slate-500 mt-2">Entrega esta Palabra de Pase al aspirante para que realice su registro.</p>`,
+        confirmButtonColor: '#d97706'
+      });
+    },
+
     async consagrarCuenta() {
       let rolTecnico = 'aprendiz';
       let gradoTecnico = this.formRegistro.grado;
@@ -923,20 +941,18 @@ document.addEventListener('alpine:init', () => {
         rolTecnico = 'maestro';
       }
 
-      if (window.apiConnection) {
-        try {
-          const payload = {
-            usuario: this.formRegistro.email.split('@')[0],
-            codigo_pase: this.formRegistro.codigoPase,
-            nombre_real: this.formRegistro.nombre,
-            password: this.formRegistro.password,
-            rol: rolTecnico,
-            grado: gradoTecnico
-          };
-          await window.apiConnection.post('/auth/registro', payload);
-        } catch (err) {
-          console.warn('Registro procesado dinámicamente.');
-        }
+      try {
+        const payload = {
+          usuario: this.formRegistro.email.split('@')[0],
+          codigo_pase: this.formRegistro.codigoPase,
+          nombre_real: this.formRegistro.nombre,
+          password: this.formRegistro.password,
+          rol: rolTecnico,
+          grado: gradoTecnico
+        };
+        await this.hacerPeticion('POST', '/auth/registro', payload);
+      } catch (err) {
+        console.warn('Registro procesado dinámicamente.');
       }
 
       const nuevoRegistrado = {
@@ -970,6 +986,37 @@ document.addEventListener('alpine:init', () => {
       this.formRegistro = { codigoPase: '', nombre: '', grado: '1º - Aprendiz', email: '', password: '', respuestaSecreta: '' };
     },
 
+    async procesarRecuperacion() {
+      try {
+        const payload = {
+          usuario: this.formRecuperar.email.includes('@') ? this.formRecuperar.email.split('@')[0] : this.formRecuperar.email,
+          respuesta_secreta: this.formRecuperar.respuestaSecreta,
+          nueva_password: this.formRecuperar.nuevaPassword
+        };
+        await this.hacerPeticion('POST', '/auth/recuperar-password', payload);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Contraseña Actualizada',
+          text: 'Contraseña actualizada con éxito. Ya puedes iniciar sesión.',
+          confirmButtonColor: '#d97706'
+        });
+
+        this.modoRecuperar = false;
+        this.formRecuperar = { email: '', respuestaSecreta: '', nuevaPassword: '' };
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error de Recuperación',
+          text: err.message || 'Error al recuperar la contraseña. Verifica tus datos.',
+          confirmButtonColor: '#b91c1c'
+        });
+      }
+    },
+
+    // ==========================================
+    // 👥 ADMINISTRACIÓN DEL CUADRO LOGIAL
+    // ==========================================
     async editarGradoAdmitido(hermanoAdmitido) {
       let optionsObj = {};
       this.gradosREAA.forEach(g => {
@@ -1024,13 +1071,9 @@ document.addEventListener('alpine:init', () => {
         this.aspirantesRegistrados = this.aspirantesRegistrados.filter(a => a.id !== asp.id);
         this.listaHermanos = this.listaHermanos.filter(h => h.nombre !== asp.nombre && h.email !== asp.email);
 
-        if (window.apiConnection) {
-          try {
-            await window.apiConnection.delete(`/aspirantes/${asp.id}`);
-          } catch (e) {
-            console.warn('Eliminado localmente.');
-          }
-        }
+        try {
+          await this.hacerPeticion('DELETE', `/aspirantes/${asp.id}`);
+        } catch (e) {}
 
         Swal.fire({
           icon: 'success',
@@ -1067,13 +1110,9 @@ document.addEventListener('alpine:init', () => {
       if (result.isConfirmed) {
         this.listaHermanos = this.listaHermanos.filter(h => h.id !== hermano.id);
 
-        if (window.apiConnection) {
-          try {
-            await window.apiConnection.delete(`/usuarios/${hermano.id}`);
-          } catch (e) {
-            console.warn('Eliminado localmente.');
-          }
-        }
+        try {
+          await this.hacerPeticion('DELETE', `/usuarios/${hermano.id}`);
+        } catch (e) {}
 
         Swal.fire({
           icon: 'success',
@@ -1083,55 +1122,6 @@ document.addEventListener('alpine:init', () => {
           showConfirmButton: false
         });
       }
-    },
-
-    async procesarRecuperacion() {
-      if (window.apiConnection) {
-        try {
-          const payload = {
-            usuario: this.formRecuperar.email.includes('@') ? this.formRecuperar.email.split('@')[0] : this.formRecuperar.email,
-            respuesta_secreta: this.formRecuperar.respuestaSecreta,
-            nueva_password: this.formRecuperar.nuevaPassword
-          };
-          await window.apiConnection.post('/auth/recuperar-password', payload);
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Contraseña Actualizada',
-            text: 'Contraseña actualizada con éxito. Ya puedes iniciar sesión.',
-            confirmButtonColor: '#d97706'
-          });
-
-          this.modoRecuperar = false;
-          this.formRecuperar = { email: '', respuestaSecreta: '', nuevaPassword: '' };
-        } catch (err) {
-          const msg = err.data && err.data.detail 
-            ? err.data.detail 
-            : 'Error al recuperar la contraseña. Verifica tus datos.';
-
-          Swal.fire({
-            icon: 'error',
-            title: 'Error de Recuperación',
-            text: msg,
-            confirmButtonColor: '#b91c1c'
-          });
-        }
-      }
-    },
-
-    cerrarSesion() {
-      this.usuarioLogueado = null;
-      this.modoRecuperar = false;
-      localStorage.removeItem('lapis_sesion');
-      this.vistaActual = 'pasos_perdidos';
-
-      Swal.fire({
-        icon: 'info',
-        title: 'Sesión Cerrada',
-        text: 'Has salido del sistema.',
-        timer: 1500,
-        showConfirmButton: false
-      });
     },
 
     obtenerIndiceEscalafon(hermano) {
@@ -1152,23 +1142,19 @@ document.addEventListener('alpine:init', () => {
       }
 
       const idx = this.listaHermanos.findIndex(h => h.id === hermano.id);
-      
+
       if (idx !== -1) {
         this.listaHermanos[idx].grado = nuevoGrado;
         this.listaHermanos[idx].rol = nuevoRol;
         this.listaHermanos = [...this.listaHermanos];
       }
 
-      if (window.apiConnection) {
-        try {
-          await window.apiConnection.patch(`/usuarios/${hermano.id}/rol`, {
-            grado: nuevoGrado,
-            rol: nuevoRol
-          });
-        } catch (e) {
-          console.warn('Cambio aplicado localmente.');
-        }
-      }
+      try {
+        await this.hacerPeticion('PATCH', `/usuarios/${hermano.id}/rol`, {
+          grado: nuevoGrado,
+          rol: nuevoRol
+        });
+      } catch (e) {}
     },
 
     async aumentarRolHermano(hermano) {
