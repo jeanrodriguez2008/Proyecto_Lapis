@@ -9,7 +9,7 @@ const apiConnection = {
             const sesion = localStorage.getItem('lapis_sesion');
             if (sesion) {
                 const parsed = JSON.parse(sesion);
-                return parsed.token || parsed.usuario || parsed.email || '';
+                return parsed.token || '';
             }
         } catch (e) {
             return '';
