@@ -56,13 +56,90 @@ document.addEventListener('alpine:init', () => {
     ],
 
     // Publicaciones Dinámicas de Pasos Perdidos
-    tarjetasDinamicas: [],
+    tarjetasDinamicas: [
+      {
+        id: 1,
+        titulo: 'Bienvenida a los Pasos Perdidos',
+        categoria: 'principios',
+        contenido: 'Trazado de recepción y bienvenida a nuestro portal público institucional sobre valores y fraternidad.',
+        urlPdf: null,
+        autor: 'Venerable Maestro / Webmaster',
+        fecha: '2026-07-01'
+      },
+      {
+        id: 2,
+        titulo: 'Simbolismo y Filosofía en la Logia',
+        categoria: 'docencia',
+        contenido: 'Una breve revisión pedagógica e histórica sobre los rituales morales y el valor del estudio filosófico.',
+        urlPdf: null,
+        autor: 'Maestro de Docencia',
+        fecha: '2026-07-05'
+      },
+      {
+        id: 3,
+        titulo: 'Jornada Filantrópica Institucional',
+        categoria: 'accion',
+        contenido: 'Informe de las actividades benéficas y el auxilio fraterno extendido a la comunidad civil.',
+        urlPdf: null,
+        autor: 'Hospitalario',
+        fecha: '2026-07-12'
+      },
+      {
+        id: 4,
+        titulo: 'Constitución Masónica General',
+        categoria: 'biblioteca',
+        contenido: 'Documento fundamental con los principios y reglamentos para consulta abierta en PDF.',
+        urlPdf: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        autor: 'Biblioteca Digital',
+        fecha: '2026-07-18'
+      }
+    ],
 
     // Trazados de la Cámara del Umbral
-    trazados: [],
+    trazados: [
+      {
+        id: 101,
+        titulo: 'El Simbolismo de la Piedra Bruta',
+        grado: '1º - Aprendiz',
+        resumen: 'Instrucción fundamental sobre el trabajo interior en el primer grado.',
+        contenido: 'Contenido completo sobre la piedra bruta y su desbaste...',
+        autor: 'H:. Q:. H:. Inspector',
+        fecha: '2026-07-10'
+      },
+      {
+        id: 102,
+        titulo: 'La Marcha y la Regla de Cinco Pasos',
+        grado: '2º - Compañero',
+        resumen: 'Estudio de la geometría aplicada y el paso del Compañero.',
+        contenido: 'Contenido profundo sobre la marcha del segundo grado...',
+        autor: 'Segundo Vigilante',
+        fecha: '2026-07-15'
+      },
+      {
+        id: 103,
+        titulo: 'La Leyenda del Cuarto de Reflexiones',
+        grado: '3º - Maestro',
+        resumen: 'Análisis arquitectónico y simbólico reservado para el Magisterio.',
+        contenido: 'Plancha trazada reservada exclusivamente para la Tercera Cámara...',
+        autor: 'Primer Vigilante',
+        fecha: '2026-07-20'
+      }
+    ],
 
     // Procesos de Balotaje
-    listaBalotajes: [],
+    listaBalotajes: [
+      {
+        id: 1,
+        candidato: 'Venerable Maestro',
+        motivo: 'INICIACION',
+        descripcion: '¿Está de acuerdo con iniciar a los profanos actuales?',
+        activo: false,
+        fechaInicio: '2026-07-20',
+        fechaFin: '2026-07-27',
+        blancas: 1,
+        negras: 2
+      }
+    ],
 
     // Solicitudes de Contacto
     listaSolicitudesContacto: [
@@ -137,19 +214,10 @@ document.addEventListener('alpine:init', () => {
         }
       }
 
-      await this.cargarPasosPerdidos();
-      await this.cargarTrazados();
-
-      if (this.usuarioLogueado) {
-        await this.cargarBalotajesBackend();
-      }
-    },
-
-    async cargarPasosPerdidos() {
       if (window.apiConnection) {
         try {
           const remotePasos = await window.apiConnection.get('/pasos-perdidos');
-          if (remotePasos && Array.isArray(remotePasos)) {
+          if (remotePasos && Array.isArray(remotePasos) && remotePasos.length > 0) {
             this.tarjetasDinamicas = remotePasos.map(p => ({
               id: p.id,
               titulo: p.titulo,
@@ -159,34 +227,14 @@ document.addEventListener('alpine:init', () => {
               autor: p.autor,
               fecha: p.fecha ? p.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
             }));
-            return;
           }
         } catch (e) {
           console.warn('Cargando tarjetas de Pasos Perdidos locales.');
         }
-      }
-      
-      // Fallback local en caso de error de servidor
-      if (this.tarjetasDinamicas.length === 0) {
-        this.tarjetasDinamicas = [
-          {
-            id: 1,
-            titulo: 'Bienvenida a los Pasos Perdidos',
-            categoria: 'principios',
-            contenido: 'Trazado de recepción y bienvenida a nuestro portal público institucional sobre valores y fraternidad.',
-            urlPdf: null,
-            autor: 'Venerable Maestro / Webmaster',
-            fecha: '2026-07-01'
-          }
-        ];
-      }
-    },
 
-    async cargarTrazados() {
-      if (window.apiConnection) {
         try {
           const remoteTrazados = await window.apiConnection.get('/trazados');
-          if (remoteTrazados && Array.isArray(remoteTrazados)) {
+          if (remoteTrazados && Array.isArray(remoteTrazados) && remoteTrazados.length > 0) {
             this.trazados = remoteTrazados.map(t => ({
               id: t.id,
               titulo: t.titulo,
@@ -196,11 +244,14 @@ document.addEventListener('alpine:init', () => {
               autor: t.autor,
               fecha: t.fecha_publicacion ? t.fecha_publicacion.split('T')[0] : new Date().toISOString().split('T')[0]
             }));
-            return;
           }
         } catch (e) {
           console.warn('Cargando trazados locales por defecto.');
         }
+      }
+
+      if (this.usuarioLogueado) {
+        this.cargarBalotajesBackend();
       }
     },
 
@@ -208,6 +259,7 @@ document.addEventListener('alpine:init', () => {
       this.categoriaPasosPerdidos = (this.categoriaPasosPerdidos === cat) ? null : cat;
     },
 
+    // FUNCIÓN PARA ABRIR ARTÍCULOS DE PASOS PERDIDOS EN MODAL (AMPLIADO)
     verArticuloPasosPerdidos(tarjeta) {
       let botonPdf = '';
       if (tarjeta.urlPdf) {
@@ -239,7 +291,7 @@ document.addEventListener('alpine:init', () => {
       if (!window.apiConnection) return;
       try {
         const remoteBalotajes = await window.apiConnection.get('/balotajes');
-        if (remoteBalotajes && Array.isArray(remoteBalotajes)) {
+        if (remoteBalotajes && Array.isArray(remoteBalotajes) && remoteBalotajes.length > 0) {
           this.listaBalotajes = remoteBalotajes.map(b => ({
             id: b.id,
             candidato: b.candidato,
@@ -355,8 +407,7 @@ document.addEventListener('alpine:init', () => {
             };
             localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
             this.formLogin = { email: '', password: '' };
-            await this.cargarPasosPerdidos();
-            await this.cargarBalotajesBackend();
+            this.cargarBalotajesBackend();
 
             Swal.fire({
               icon: 'success',
@@ -395,7 +446,7 @@ document.addEventListener('alpine:init', () => {
           };
           localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
           this.formLogin = { email: '', password: '' };
-          await this.cargarBalotajesBackend();
+          this.cargarBalotajesBackend();
 
           Swal.fire({
             icon: 'success',
@@ -491,27 +542,44 @@ document.addEventListener('alpine:init', () => {
       if (formValues) {
         const [categoria, titulo, contenido, urlPdf] = formValues;
         
+        let subidaConExito = false;
         if (window.apiConnection) {
           try {
-            await window.apiConnection.post('/pasos-perdidos', {
+            const resp = await window.apiConnection.post('/pasos-perdidos', {
               titulo: titulo,
               contenido: contenido,
               categoria: categoria,
               url_pdf: urlPdf || null
             });
-            await this.cargarPasosPerdidos();
+
+            if (resp && resp.id) {
+              this.tarjetasDinamicas.unshift({
+                id: resp.id,
+                categoria: resp.categoria,
+                titulo: resp.titulo,
+                contenido: resp.contenido,
+                urlPdf: resp.url_pdf || null,
+                autor: resp.autor,
+                fecha: resp.fecha ? resp.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
+              });
+              subidaConExito = true;
+            }
           } catch (e) {
             console.warn('Fallo petición API Pasos Perdidos.');
-            this.tarjetasDinamicas.unshift({
-              id: Date.now(),
-              categoria: categoria,
-              titulo: titulo,
-              contenido: contenido,
-              urlPdf: urlPdf || null,
-              autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
-              fecha: new Date().toISOString().split('T')[0]
-            });
           }
+        }
+
+        if (!subidaConExito) {
+          const nuevaTarjeta = {
+            id: Date.now(),
+            categoria: categoria,
+            titulo: titulo,
+            contenido: contenido,
+            urlPdf: urlPdf || null,
+            autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
+            fecha: new Date().toISOString().split('T')[0]
+          };
+          this.tarjetasDinamicas.unshift(nuevaTarjeta);
         }
 
         this.categoriaPasosPerdidos = categoria;
@@ -600,28 +668,34 @@ document.addEventListener('alpine:init', () => {
       });
 
       if (formValues) {
+        let nuevoTrazado = {
+          id: Date.now(),
+          ...formValues,
+          autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
+          fecha: new Date().toISOString().split('T')[0]
+        };
+
         if (window.apiConnection) {
           try {
             let camara = 'aprendiz';
             if (formValues.grado.includes('Compañero')) camara = 'companero';
             if (formValues.grado.includes('Maestro')) camara = 'maestro';
 
-            await window.apiConnection.post('/trazados', {
+            const resp = await window.apiConnection.post('/trazados', {
               titulo: formValues.titulo,
               contenido: formValues.contenido,
               camara_destino: camara
             });
-            await this.cargarTrazados();
+
+            if (resp && resp.id) {
+              nuevoTrazado.id = resp.id;
+            }
           } catch (e) {
             console.warn('Trazado guardado en memoria local.');
-            this.trazados.unshift({
-              id: Date.now(),
-              ...formValues,
-              autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
-              fecha: new Date().toISOString().split('T')[0]
-            });
           }
         }
+
+        this.trazados.unshift(nuevoTrazado);
 
         Swal.fire({
           icon: 'success',
@@ -696,31 +770,37 @@ document.addEventListener('alpine:init', () => {
       });
 
       if (formValues) {
+        let nuevoBalotaje = {
+          id: Date.now(),
+          candidato: formValues.candidato,
+          motivo: formValues.motivo,
+          descripcion: formValues.descripcion,
+          activo: true,
+          fechaInicio: formValues.fechaInicio,
+          fechaFin: formValues.fechaFin,
+          blancas: 0,
+          negras: 0
+        };
+
         if (window.apiConnection) {
           try {
-            await window.apiConnection.post('/balotajes', {
+            const resp = await window.apiConnection.post('/balotajes', {
               candidato: formValues.candidato,
               motivo: formValues.motivo,
               descripcion: formValues.descripcion,
               fecha_inicio: formValues.fechaInicio,
               fecha_fin: formValues.fechaFin
             });
-            await this.cargarBalotajesBackend();
+
+            if (resp && resp.id) {
+              nuevoBalotaje.id = resp.id;
+            }
           } catch (e) {
             console.warn('Balotaje guardado localmente.');
-            this.listaBalotajes.unshift({
-              id: Date.now(),
-              candidato: formValues.candidato,
-              motivo: formValues.motivo,
-              descripcion: formValues.descripcion,
-              activo: true,
-              fechaInicio: formValues.fechaInicio,
-              fechaFin: formValues.fechaFin,
-              blancas: 0,
-              negras: 0
-            });
           }
         }
+
+        this.listaBalotajes.unshift(nuevoBalotaje);
 
         Swal.fire({
           icon: 'success',
