@@ -50,7 +50,7 @@ def validar_acceso_maestro_o_admin(usuario: models.Usuario):
 # 🔐 ENDPOINTS: AUTENTICACIÓN Y REGISTRO
 # ==========================================
 
-@app.post("/api/auth/login", response_model=schemas.LoginResponse)
+@app.post("/auth/login", response_model=schemas.LoginResponse)
 def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
     usuario = db.query(models.Usuario).filter(models.Usuario.usuario == req.usuario).first()
     if not usuario or not verificar_password(req.password, usuario.password_hash):
@@ -72,7 +72,7 @@ def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
     }
 
 
-@app.post("/api/auth/registro", response_model=schemas.UsuarioResponse)
+@app.post("/auth/registro", response_model=schemas.UsuarioResponse)
 def registrar_usuario(req: schemas.UsuarioCreate, db: Session = Depends(get_db)):
     codigo_valido = db.query(models.CodigoPase).filter(
         models.CodigoPase.codigo == req.codigo_pase,
@@ -109,7 +109,7 @@ def registrar_usuario(req: schemas.UsuarioCreate, db: Session = Depends(get_db))
     return nuevo_usuario
 
 
-@app.post("/api/auth/recuperar-password")
+@app.post("/auth/recuperar-password")
 def recuperar_password(req: schemas.RecuperarPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(models.Usuario).filter(
         models.Usuario.usuario == req.usuario
@@ -130,12 +130,12 @@ def recuperar_password(req: schemas.RecuperarPasswordRequest, db: Session = Depe
 # 🏛️ ENDPOINTS: PASOS PERDIDOS Y VISITAS
 # ==========================================
 
-@app.get("/api/pasos-perdidos", response_model=List[schemas.TarjetaPasosPerdidosResponse])
+@app.get("/pasos-perdidos", response_model=List[schemas.TarjetaPasosPerdidosResponse])
 def listar_pasos_perdidos(db: Session = Depends(get_db)):
     return db.query(models.TarjetaPasosPerdidos).order_by(models.TarjetaPasosPerdidos.fecha.desc()).all()
 
 
-@app.post("/api/pasos-perdidos", response_model=schemas.TarjetaPasosPerdidosResponse)
+@app.post("/pasos-perdidos", response_model=schemas.TarjetaPasosPerdidosResponse)
 def crear_pasos_perdidos(
     req: schemas.TarjetaPasosPerdidosCreate, 
     db: Session = Depends(get_db), 
@@ -157,7 +157,7 @@ def crear_pasos_perdidos(
     return nueva_tarjeta
 
 
-@app.delete("/api/pasos-perdidos/{tarjeta_id}")
+@app.delete("/pasos-perdidos/{tarjeta_id}")
 def eliminar_pasos_perdidos(tarjeta_id: int, db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
     if autor.rol not in ROLES_ADMINISTRATIVOS:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado.")
@@ -171,8 +171,8 @@ def eliminar_pasos_perdidos(tarjeta_id: int, db: Session = Depends(get_db), auto
     return {"mensaje": "Publicación eliminada correctamente."}
 
 
-@app.get("/api/pasos-perdidos/visitas")
-@app.post("/api/pasos-perdidos/visitas")
+@app.get("/pasos-perdidos/visitas")
+@app.post("/pasos-perdidos/visitas")
 def registrar_y_obtener_visita(db: Session = Depends(get_db)):
     registro = db.query(models.AjustesGlobales).filter(models.AjustesGlobales.clave == "visitas").first()
     if not registro:
@@ -190,7 +190,7 @@ def registrar_y_obtener_visita(db: Session = Depends(get_db)):
 # ✊ ENDPOINTS: TOCAR PUERTA / CONTACTO
 # ==========================================
 
-@app.post("/api/contacto", response_model=schemas.SolicitudContactoResponse)
+@app.post("/contacto", response_model=schemas.SolicitudContactoResponse)
 def enviar_contacto(req: schemas.SolicitudContactoCreate, db: Session = Depends(get_db)):
     nueva_solicitud = models.SolicitudContacto(
         nombre=req.nombre,
@@ -205,14 +205,14 @@ def enviar_contacto(req: schemas.SolicitudContactoCreate, db: Session = Depends(
     return nueva_solicitud
 
 
-@app.get("/api/contacto/listar", response_model=List[schemas.SolicitudContactoResponse])
+@app.get("/contacto/listar", response_model=List[schemas.SolicitudContactoResponse])
 def listar_contactos(db: Session = Depends(get_db), admin: models.Usuario = Depends(obtener_usuario_actual)):
     if admin.rol not in ROLES_ADMINISTRATIVOS:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso reservado para el Trono y Webmaster.")
     return db.query(models.SolicitudContacto).order_by(models.SolicitudContacto.fecha_creacion.desc()).all()
 
 
-@app.post("/api/contacto/{solicitud_id}/generar-codigo")
+@app.post("/contacto/{solicitud_id}/generar-codigo")
 def generar_codigo_contacto(solicitud_id: int, db: Session = Depends(get_db), admin: models.Usuario = Depends(obtener_usuario_actual)):
     if admin.rol not in ROLES_ADMINISTRATIVOS:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
@@ -235,12 +235,12 @@ def generar_codigo_contacto(solicitud_id: int, db: Session = Depends(get_db), ad
 # 📜 ENDPOINTS: TRAZADOS
 # ==========================================
 
-@app.get("/api/trazados", response_model=List[schemas.TrazadoResponse])
+@app.get("/trazados", response_model=List[schemas.TrazadoResponse])
 def listar_trazados(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
     return db.query(models.Trazado).order_by(models.Trazado.fecha_publicacion.desc()).all()
 
 
-@app.post("/api/trazados", response_model=schemas.TrazadoResponse)
+@app.post("/trazados", response_model=schemas.TrazadoResponse)
 def crear_trazado(req: schemas.TrazadoCreate, db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
     nuevo_trazado = models.Trazado(
         titulo=req.titulo,
@@ -255,7 +255,7 @@ def crear_trazado(req: schemas.TrazadoCreate, db: Session = Depends(get_db), aut
     return nuevo_trazado
 
 
-@app.delete("/api/trazados/{trazado_id}")
+@app.delete("/trazados/{trazado_id}")
 def eliminar_trazado(trazado_id: int, db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
     if autor.rol not in ROLES_ADMINISTRATIVOS:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
@@ -273,13 +273,13 @@ def eliminar_trazado(trazado_id: int, db: Session = Depends(get_db), autor: mode
 # ⚖️ ENDPOINTS: BALOTAJES (VOTACIONES)
 # ==========================================
 
-@app.get("/api/balotajes")
+@app.get("/balotajes")
 def listar_balotajes(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
     validar_acceso_maestro_o_admin(usuario)
     return db.query(models.Balotaje).order_by(models.Balotaje.id.desc()).all()
 
 
-@app.post("/api/balotajes")
+@app.post("/balotajes")
 def crear_balotaje(data: dict, db: Session = Depends(get_db), admin: models.Usuario = Depends(obtener_usuario_actual)):
     if admin.rol not in ROLES_ADMINISTRATIVOS:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
@@ -300,7 +300,7 @@ def crear_balotaje(data: dict, db: Session = Depends(get_db), admin: models.Usua
     return nuevo_balotaje
 
 
-@app.post("/api/balotajes/{balotaje_id}/votar")
+@app.post("/balotajes/{balotaje_id}/votar")
 def emitir_voto(balotaje_id: int, payload: dict, db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
     validar_acceso_maestro_o_admin(usuario)
     
