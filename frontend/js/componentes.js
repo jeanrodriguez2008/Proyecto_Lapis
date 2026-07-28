@@ -228,7 +228,7 @@ window.VistasProyectoLapis = {
       </div>
       <form @submit.prevent="consagrarCuenta()" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Código de Pase (Generado por el Trono / Webmaster)</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Palabra de Pase (Codigo generado por el Venerable Maestro)</label>
           <input type="text" x-model="formRegistro.codigoPase" placeholder="EJ: TRONO149-XYZ" required class="w-full border-slate-300 rounded-lg p-2.5 border uppercase tracking-widest text-center font-mono font-bold text-amber-700 bg-amber-50/50">
         </div>
         <div>
