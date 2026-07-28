@@ -84,7 +84,7 @@ document.addEventListener('alpine:init', () => {
         autor: 'Hospitalario',
         fecha: '2026-07-12'
       },
-        {
+      {
         id: 4,
         titulo: 'Constitución Masónica General',
         categoria: 'biblioteca',
@@ -345,7 +345,6 @@ document.addEventListener('alpine:init', () => {
 
     // Iniciar Sesión
     async iniciarSesion() {
-      this.modoRecuperar = false;
       const inputUsuario = this.formLogin.email ? this.formLogin.email.trim().toLowerCase() : '';
       const inputPassword = this.formLogin.password ? this.formLogin.password.trim() : '';
 
