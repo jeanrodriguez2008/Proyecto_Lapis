@@ -25,7 +25,7 @@ class TarjetaPasosPerdidos(Base):
     id = Column(Integer, primary_key=True, index=True)
     titulo = Column(String, nullable=False)
     contenido = Column(Text, nullable=False)
-    categoria = Column(String, default="principios", nullable=False)  # principios, docencia, accion, biblioteca
+    categoria = Column(String, default="principios", nullable=False)
     url_pdf = Column(String, nullable=True)
     autor = Column(String, nullable=False)
     fecha = Column(DateTime, default=obtener_fecha_actual)
@@ -59,7 +59,6 @@ class Balotaje(Base):
 
 
 class VotoRegistro(Base):
-    """Garantiza que cada usuario vote solo una vez en un balotaje determinado."""
     __tablename__ = "votos_registro"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -84,6 +83,6 @@ class Trazado(Base):
     titulo = Column(String, nullable=False)
     contenido = Column(Text, nullable=False)
     autor = Column(String, nullable=False)
-    rol_autor = Column(String, nullable=False)
+    rol_autor = Column(String, default="integrante", nullable=True)
     camara_destino = Column(String, default="aprendiz", nullable=False)
     fecha_publicacion = Column(DateTime, default=obtener_fecha_actual)

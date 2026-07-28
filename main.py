@@ -4,13 +4,11 @@ from typing import List
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 import models
 import schemas
-from database import engine, get_db
+from database import engine, get_db, init_db
 from security import (
     obtener_usuario_actual,
     encriptar_password,
@@ -19,19 +17,18 @@ from security import (
     ROLES_ADMINISTRATIVOS
 )
 
-# Inicializar las tablas de la base de datos
-models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI(
     title="API Proyecto Lapis",
     description="Backend para la gestión institucional de la R:.L:.S:. Dignidad Humana N° 149",
     version="1.0.0"
 )
 
-# Variable global en memoria para conteo centralizado
+@app.on_event("startup")
+def startup_event():
+    init_db()
+
 contador_visitas_global = 0
 
-# Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -40,7 +37,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Función auxiliar para validar acceso por grado/perfil
 def validar_acceso_maestro_o_admin(usuario: models.Usuario):
     grado = (usuario.grado or "").strip().lower()
     rol = (usuario.rol or "").strip().lower()
@@ -185,7 +181,7 @@ def registrar_visita():
 
 
 # ==========================================
-# ✊ ENDPOINTS: TOCAR PUERTA
+# ✊ ENDPOINTS: TOCAR PUERTA / CONTACTO
 # ==========================================
 
 @app.post("/api/contacto", response_model=schemas.SolicitudContactoResponse)
@@ -244,7 +240,8 @@ def crear_trazado(req: schemas.TrazadoCreate, db: Session = Depends(get_db), aut
         titulo=req.titulo,
         contenido=req.contenido,
         camara_destino=req.camara_destino,
-        autor=autor.nombre_real
+        autor=autor.nombre_real,
+        rol_autor=autor.rol
     )
     db.add(nuevo_trazado)
     db.commit()
@@ -266,5 +263,66 @@ def eliminar_trazado(trazado_id: int, db: Session = Depends(get_db), autor: mode
     return {"mensaje": "Trazado eliminado."}
 
 
-# Servir Frontend Estático apuntando a la carpeta frontend
+# ==========================================
+# ⚖️ ENDPOINTS: BALOTAJES (VOTACIONES)
+# ==========================================
+
+@app.get("/api/balotajes")
+def listar_balotajes(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
+    validar_acceso_maestro_o_admin(usuario)
+    return db.query(models.Balotaje).order_by(models.Balotaje.id.desc()).all()
+
+
+@app.post("/api/balotajes")
+def crear_balotaje(data: dict, db: Session = Depends(get_db), admin: models.Usuario = Depends(obtener_usuario_actual)):
+    if admin.rol not in ROLES_ADMINISTRATIVOS:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
+    
+    nuevo_balotaje = models.Balotaje(
+        candidato=data.get("candidato", "Candidato"),
+        motivo=data.get("motivo", "Iniciación"),
+        descripcion=data.get("descripcion", ""),
+        fecha_inicio=data.get("fecha_inicio", ""),
+        fecha_fin=data.get("fecha_fin", ""),
+        activo=True,
+        blancas=0,
+        negras=0
+    )
+    db.add(nuevo_balotaje)
+    db.commit()
+    db.refresh(nuevo_balotaje)
+    return nuevo_balotaje
+
+
+@app.post("/api/balotajes/{balotaje_id}/votar")
+def emitir_voto(balotaje_id: int, payload: dict, db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
+    validar_acceso_maestro_o_admin(usuario)
+    
+    balotaje = db.query(models.Balotaje).filter(models.Balotaje.id == balotaje_id, models.Balotaje.activo == True).first()
+    if not balotaje:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Balotaje no encontrado o finalizado.")
+    
+    ya_voto = db.query(models.VotoRegistro).filter(
+        models.VotoRegistro.balotaje_id == balotaje_id,
+        models.VotoRegistro.usuario_id == usuario.id
+    ).first()
+    
+    if ya_voto:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya has emitido tu voto en esta balota.")
+    
+    tipo_voto = payload.get("voto")  # "blanca" o "negra"
+    if tipo_voto == "blanca":
+        balotaje.blancas += 1
+    elif tipo_voto == "negra":
+        balotaje.negras += 1
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Voto no válido.")
+    
+    registro = models.VotoRegistro(balotaje_id=balotaje_id, usuario_id=usuario.id)
+    db.add(registro)
+    db.commit()
+    
+    return {"mensaje": "Voto registrado exitosamente."}
+
+
 app.mount("/", StaticFiles(directory="frontend", html=True), name="static")

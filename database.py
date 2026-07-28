@@ -4,20 +4,15 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from dotenv import load_dotenv
 from passlib.context import CryptContext
 
-# Cargar variables de entorno desde el archivo .env si existe
 load_dotenv()
 
-# Contexto para manejo de contraseñas con bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Leer la URL de la base de datos desde variables de entorno (Neon Tech / PostgreSQL / SQLite)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./lapis.db")
 
-# Ajuste automático para Neon Tech / PostgreSQL en Render:
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Configuración del motor según el tipo de base de datos
 connect_args = {}
 if DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
@@ -28,13 +23,10 @@ engine = create_engine(
     pool_pre_ping=True
 )
 
-# Sesión local para interactuar con la base de datos
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Clase base de la que heredarán los modelos de SQLAlchemy
 Base = declarative_base()
 
-# Dependencia para obtener la sesión en los endpoints de FastAPI
 def get_db():
     db = SessionLocal()
     try:
@@ -44,17 +36,12 @@ def get_db():
 
 
 def init_db():
-    """
-    Crea automáticamente las tablas e inserta/verifica
-    los usuarios principales por defecto y el código de pase inicial.
-    """
-    import models  # Importación tardía para evitar importaciones circulares
+    import models
 
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
     try:
-        # 1. Verificar y sembrar al Webmaster
         webmaster_user = db.query(models.Usuario).filter(models.Usuario.usuario == "webmaster").first()
         if not webmaster_user:
             print("🏛️ Creando usuario Webmaster...")
@@ -70,7 +57,6 @@ def init_db():
         else:
             print("ℹ️ Usuario 'webmaster' verificado.")
 
-        # 2. Verificar y sembrar al Venerable Maestro
         venerable_user = db.query(models.Usuario).filter(models.Usuario.usuario == "venerable").first()
         if not venerable_user:
             print("📜 Creando usuario Venerable Maestro...")
@@ -86,7 +72,6 @@ def init_db():
         else:
             print("ℹ️ Usuario 'venerable' verificado.")
 
-        # 3. Generar código de pase inicial si no existe
         if hasattr(models, 'CodigoPase'):
             pase_existente = db.query(models.CodigoPase).filter(models.CodigoPase.codigo == "PASE2026").first()
             if not pase_existente:
