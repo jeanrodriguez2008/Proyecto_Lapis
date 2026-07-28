@@ -64,7 +64,7 @@ const apiConnection = {
     async post(endpoint, body) {
         return await this.request(endpoint, {
             method: 'POST',
-            body: JSON.stringify(body)
+            body: body ? JSON.stringify(body) : undefined
         });
     },
 
@@ -78,7 +78,7 @@ const apiConnection = {
     async patch(endpoint, body) {
         return await this.request(endpoint, {
             method: 'PATCH',
-            body: JSON.stringify(body)
+            body: body ? JSON.stringify(body) : undefined
         });
     },
 

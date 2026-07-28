@@ -103,9 +103,25 @@ document.addEventListener('alpine:init', () => {
     formRecuperar: { email: '', respuestaSecreta: '', nuevaPassword: '' },
 
     async init() {
-      let visitasLocales = localStorage.getItem('lapis_contador_visitas');
-      this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) + 1 : 1;
-      localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
+      // Registrar e incrementar el contador global en FastAPI
+      if (window.apiConnection) {
+        try {
+          const res = await window.apiConnection.get('/pasos-perdidos/visitas');
+          if (res && res.visitas !== undefined) {
+            this.contadorVisitas = res.visitas;
+            localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
+          }
+        } catch (e) {
+          console.warn('Servidor offline, utilizando contador local.');
+          let visitasLocales = localStorage.getItem('lapis_contador_visitas');
+          this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) + 1 : 1;
+          localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
+        }
+      } else {
+        let visitasLocales = localStorage.getItem('lapis_contador_visitas');
+        this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) + 1 : 1;
+        localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
+      }
 
       const sesionGuardada = localStorage.getItem('lapis_sesion');
       if (sesionGuardada) {
@@ -771,7 +787,7 @@ document.addEventListener('alpine:init', () => {
       if (balotaje && balotaje.activo) {
         if (window.apiConnection) {
           try {
-            await window.apiConnection.post(`/balotajes/${id}/votar`, { tipo_voto: tipo });
+            await window.apiConnection.post(`/balotajes/${id}/votar`, { voto: tipo, tipo_voto: tipo });
             if (tipo === 'blanca') balotaje.blancas++;
             if (tipo === 'negra') balotaje.negras++;
 

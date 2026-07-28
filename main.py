@@ -173,8 +173,9 @@ def eliminar_pasos_perdidos(tarjeta_id: int, db: Session = Depends(get_db), auto
     return {"mensaje": "Publicación eliminada correctamente."}
 
 
+@app.get("/api/pasos-perdidos/visitas")
 @app.post("/api/pasos-perdidos/visitas")
-def registrar_visita():
+def registrar_y_obtener_visita():
     global contador_visitas_global
     contador_visitas_global += 1
     return {"visitas": contador_visitas_global}
@@ -310,7 +311,7 @@ def emitir_voto(balotaje_id: int, payload: dict, db: Session = Depends(get_db), 
     if ya_voto:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya has emitido tu voto en esta balota.")
     
-    tipo_voto = payload.get("voto")  # "blanca" o "negra"
+    tipo_voto = payload.get("voto") or payload.get("tipo_voto")  # "blanca" o "negra"
     if tipo_voto == "blanca":
         balotaje.blancas += 1
     elif tipo_voto == "negra":
