@@ -4,21 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Proyecto Lapis - Resp:. Logia:. Sob:. Dignidad Humana N° 149</title>
+  
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <!-- SweetAlert2 CSS y JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Carga de Módulos JavaScript Previos -->
+  <script src="js/api.js"></script>
+  <script src="js/componentes.js"></script>
+
   <!-- Alpine.js Core -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans" x-data="appLapis">
 
-  <!-- Navegación Superior / Header con Botones Siempre Visibles -->
+  <!-- Navegación Superior -->
   <header class="bg-slate-900 text-white shadow-lg border-b border-amber-500/30 sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         
-        <!-- Logo Principal de la Logia -->
+        <!-- Logo Principal -->
         <div class="flex items-center gap-3 cursor-pointer" @click="vistaActual = 'pasos_perdidos'">
           <img src="logo.png" alt="Logo Logia Dignidad Humana N° 149" class="h-10 w-auto object-contain rounded">
           <div>
@@ -53,7 +60,6 @@
             Umbral
           </button>
 
-          <!-- Opción adicional exclusiva del Perfil del Trono / Venerable Maestro / Webmaster -->
           <template x-if="tienePermisoPerfilTrono()">
             <button @click="vistaActual = 'admin'" 
                     :class="vistaActual === 'admin' ? 'bg-amber-500/20 text-amber-400 border-amber-500' : 'text-slate-300 hover:bg-slate-800 hover:text-white border-transparent'"
@@ -64,7 +70,7 @@
           </template>
         </nav>
 
-        <!-- Bloque de Usuario / Cierre de Sesión -->
+        <!-- Bloque de Usuario -->
         <div class="flex items-center gap-3">
           <template x-if="usuarioLogueado">
             <div class="flex items-center gap-3">
@@ -77,28 +83,60 @@
               </button>
             </div>
           </template>
+
+          <div class="md:hidden flex items-center">
+            <button @click="menuMovilAbierto = !menuMovilAbierto" class="text-slate-300 hover:text-white p-2 focus:outline-none">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path x-show="!menuMovilAbierto" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                <path x-show="menuMovilAbierto" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
       </div>
     </div>
+
+    <!-- Menú Móvil -->
+    <div x-show="menuMovilAbierto" x-cloak class="md:hidden bg-slate-800 border-b border-amber-500/20 px-4 pt-2 pb-4 space-y-2">
+      <button @click="vistaActual = 'pasos_perdidos'; menuMovilAbierto = false" 
+              class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white">
+        Pasos Perdidos
+      </button>
+      <button @click="vistaActual = 'tocar_puerta'; menuMovilAbierto = false" 
+              class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white">
+        Tocar Puerta
+      </button>
+      <button @click="vistaActual = 'palabra_pase'; menuMovilAbierto = false" 
+              class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white">
+        Palabra de Pase
+      </button>
+      <button @click="vistaActual = 'umbral'; menuMovilAbierto = false" 
+              class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white">
+        Umbral
+      </button>
+      <template x-if="tienePermisoPerfilTrono()">
+        <button @click="vistaActual = 'admin'; menuMovilAbierto = false" 
+                class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-amber-400 hover:bg-slate-700">
+          👑 Perfil del Trono
+        </button>
+      </template>
+    </div>
   </header>
 
-  <!-- Contenido Principal Dinámico -->
+  <!-- Contenido Dinámico -->
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div x-html="VistasProyectoLapis[vistaActual]"></div>
   </main>
 
-  <!-- Pie de Página Institucional -->
+  <!-- Footer -->
   <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs mt-auto">
     <div class="max-w-7xl mx-auto px-4">
       <p>© 2026 Resp:. Logia:. Sob:. Dignidad Humana N° 149. Todos los derechos reservados.</p>
-      <p class="mt-1 text-slate-500">A:. G:. D:. G:. A:. D:. U:.</p>
+      <p class="mt-1 text-slate-500">A:. L:. G:. D:. G:. A:. D:. U:.</p>
     </div>
   </footer>
 
-  <!-- Carga de Archivos JavaScript -->
-  <script src="js/api.js"></script>
-  <script src="js/componentes.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

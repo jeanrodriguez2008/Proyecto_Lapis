@@ -39,12 +39,21 @@ const apiConnection = {
         try {
             const response = await fetch(`${this.baseUrl}${endpoint}`, config);
             if (!response.ok) {
-                throw new Error(`HTTP Error: ${response.status}`);
+                let errorData = null;
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    // Si no es JSON, capturar como texto
+                }
+                const error = new Error(`HTTP Error: ${response.status}`);
+                error.status = response.status;
+                error.data = errorData;
+                throw error;
             }
             return await response.json();
         } catch (error) {
-            console.warn(`[Lapis Connection Layer] Endpoint no alcanzable (${endpoint}). Operando en modo local/reactivo.`);
-            return null;
+            console.warn(`[Lapis Connection Layer] Endpoint no alcanzable (${endpoint}). Operando en modo local/reactivo.`, error);
+            throw error;
         }
     },
 

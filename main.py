@@ -1,29 +1,31 @@
-import os
-import hashlib
 import uuid
+import os
 from typing import List
-from fastapi import FastAPI, Depends, HTTPException, status, Header
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 import models
 import schemas
-from database import get_db, engine, init_db
+from database import engine, get_db
+from security import (
+    obtener_usuario_actual,
+    encriptar_password,
+    verificar_password,
+    crear_token_acceso,
+    ROLES_ADMINISTRATIVOS
+)
 
-# Inicializar tablas y sembrar usuarios administradores por defecto
-init_db()
-
-# ==========================================
-# 🚀 INICIALIZACIÓN DE LA APLICACIÓN
-# ==========================================
+# Inicializar las tablas de la base de datos
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Proyecto Lapis - API del Templo",
-    description="Sistema de Gestión de Roles, Trazados y Censo con soporte Webmaster",
-    version="1.1.0"
+    title="API Proyecto Lapis",
+    description="Backend para la gestión institucional de la R:.L:.S:. Dignidad Humana N° 149",
+    version="1.0.0"
 )
 
 # Configuración de CORS
@@ -35,75 +37,74 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Crear tablas automáticamente en la base de datos si no existen
-models.Base.metadata.create_all(bind=engine)
-
-# Constante de Roles de Administrador (Trono / Venerable Maestro / Webmaster)
-ROLES_ADMINISTRATIVOS = ["webmaster", "trono", "venerable_maestro", "admin"]
+# Función auxiliar para validar acceso por grado/perfil
+def validar_acceso_maestro_o_admin(usuario: models.Usuario):
+    grado = (usuario.grado or "").strip().lower()
+    rol = (usuario.rol or "").strip().lower()
+    
+    if grado in ["aprendiz", "compañero"] or rol in ["aprendiz", "compañero"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso denegado: Reservado exclusivamente para Maestros y Dignidades."
+        )
 
 
 # ==========================================
-# 🔐 FUNCIONES DE SEGURIDAD Y AUTENTICACIÓN
+# 🔐 ENDPOINTS: AUTENTICACIÓN Y REGISTRO
 # ==========================================
 
-def encriptar_password(password: str) -> str:
-    """Hashea la contraseña en SHA-256."""
-    return hashlib.sha256(password.encode('utf-8')).hexdigest()
-
-def obtener_usuario_actual(
-    db: Session = Depends(get_db), 
-    authorization: str = Header(None, alias="Authorization")
-) -> models.Usuario:
-    """
-    Dependencia de seguridad.
-    Valida el token enviado en la cabecera de autorización.
-    """
-    if not authorization:
+@app.post("/api/auth/login", response_model=schemas.LoginResponse)
+def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).filter(models.Usuario.usuario == req.usuario).first()
+    if not usuario or not verificar_password(req.password, usuario.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Se requiere cabecera de Autorización (Authorization)."
+            detail="Credenciales de acceso incorrectas."
         )
     
-    username = authorization.replace("Bearer ", "").strip()
-    
-    user = db.query(models.Usuario).filter(models.Usuario.usuario == username).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario no autorizado o sesión inválida."
-        )
-    return user
+    token = crear_token_acceso(data={"sub": usuario.usuario, "rol": usuario.rol})
+    return {
+        "token": token,
+        "usuario": {
+            "id": usuario.id,
+            "usuario": usuario.usuario,
+            "nombre_real": usuario.nombre_real,
+            "rol": usuario.rol,
+            "grado": usuario.grado
+        }
+    }
 
 
-# ==========================================
-# 👥 ENDPOINTS DE AUTENTICACIÓN Y REGISTRO
-# ==========================================
-
-@app.post("/api/auth/registro", response_model=schemas.UsuarioResponse, status_code=status.HTTP_201_CREATED)
-def registrar_usuario(req: schemas.RegistroRequest, db: Session = Depends(get_db)):
-    usuario_existente = db.query(models.Usuario).filter(models.Usuario.usuario == req.usuario).first()
-    if usuario_existente:
-        raise HTTPException(status_code=400, detail="El nombre de usuario ya está registrado.")
-    
-    codigo = db.query(models.CodigoPase).filter(
-        models.CodigoPase.codigo == req.codigo_pase, 
+@app.post("/api/auth/registro", response_model=schemas.UsuarioResponse)
+def registrar_usuario(req: schemas.UsuarioCreate, db: Session = Depends(get_db)):
+    codigo_valido = db.query(models.CodigoPase).filter(
+        models.CodigoPase.codigo == req.codigo_pase,
         models.CodigoPase.usado == False
     ).first()
     
-    if not codigo:
+    if not codigo_valido:
         raise HTTPException(
-            status_code=403, 
-            detail="Palabra de pase inválida o ya utilizada. Solicite una nueva a una Dignidad."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Palabra de pase inválida o ya utilizada."
         )
     
-    codigo.usado = True
+    existe = db.query(models.Usuario).filter(models.Usuario.usuario == req.usuario).first()
+    if existe:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El nombre de usuario ya se encuentra registrado."
+        )
     
     nuevo_usuario = models.Usuario(
         usuario=req.usuario,
         password_hash=encriptar_password(req.password),
         nombre_real=req.nombre_real,
-        rol=req.rol
+        rol=req.rol,
+        grado=req.grado
     )
+    
+    codigo_valido.usado = True
+    codigo_valido.usado_por = req.usuario
     
     db.add(nuevo_usuario)
     db.commit()
@@ -111,135 +112,129 @@ def registrar_usuario(req: schemas.RegistroRequest, db: Session = Depends(get_db
     return nuevo_usuario
 
 
-@app.post("/api/auth/login")
-def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(models.Usuario).filter(models.Usuario.usuario == req.usuario).first()
+@app.post("/api/auth/recuperar-password")
+def recuperar_password(req: schemas.RecuperarPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(models.Usuario).filter(
+        models.Usuario.usuario == req.usuario
+    ).first()
+    
     if not user:
-        raise HTTPException(status_code=400, detail="Usuario o contraseña incorrectos.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
     
-    if user.password_hash != encriptar_password(req.password):
-        raise HTTPException(status_code=400, detail="Usuario o contraseña incorrectos.")
+    if not user.respuesta_secreta or user.respuesta_secreta.lower().strip() != req.respuesta_secreta.lower().strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La respuesta secreta no coincide.")
     
-    return {
-        "token": user.usuario,
-        "usuario": {
-            "id": user.id,
-            "usuario": user.usuario,
-            "nombre": user.nombre_real,
-            "grado": getattr(user, "grado", "maestro"),
-            "rol": user.rol
-        }
-    }
+    user.password_hash = encriptar_password(req.nueva_password)
+    db.commit()
+    return {"mensaje": "Contraseña restablecida exitosamente."}
 
 
 # ==========================================
-# 🎫 ENDPOINTS DE CÓDIGOS DE PASE (TRONO / WEBMASTER)
+# 🏛️ ENDPOINTS: PASOS PERDIDOS
 # ==========================================
 
-@app.post("/api/codigos/generar", response_model=schemas.CodigoPaseResponse)
-def generar_codigo_pase(db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
+@app.get("/api/pasos-perdidos", response_model=List[schemas.TarjetaPasosPerdidosResponse])
+def listar_pasos_perdidos(db: Session = Depends(get_db)):
+    return db.query(models.TarjetaPasosPerdidos).order_by(models.TarjetaPasosPerdidos.fecha.desc()).all()
+
+
+@app.post("/api/pasos-perdidos", response_model=schemas.TarjetaPasosPerdidosResponse)
+def crear_pasos_perdidos(
+    req: schemas.TarjetaPasosPerdidosCreate, 
+    db: Session = Depends(get_db), 
+    autor: models.Usuario = Depends(obtener_usuario_actual)
+):
     if autor.rol not in ROLES_ADMINISTRATIVOS:
-        raise HTTPException(
-            status_code=403, 
-            detail="Solo el Webmaster, Trono o Venerable Maestro pueden consagrar palabras de pase."
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No posee permisos para publicar en Pasos Perdidos.")
+    
+    nueva_tarjeta = models.TarjetaPasosPerdidos(
+        titulo=req.titulo,
+        contenido=req.contenido,
+        categoria=req.categoria,
+        url_pdf=req.url_pdf,
+        autor=autor.nombre_real
+    )
+    db.add(nueva_tarjeta)
+    db.commit()
+    db.refresh(nueva_tarjeta)
+    return nueva_tarjeta
+
+
+@app.delete("/api/pasos-perdidos/{tarjeta_id}")
+def eliminar_pasos_perdidos(tarjeta_id: int, db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
+    if autor.rol not in ROLES_ADMINISTRATIVOS:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado.")
+    
+    tarjeta = db.query(models.TarjetaPasosPerdidos).filter(models.TarjetaPasosPerdidos.id == tarjeta_id).first()
+    if not tarjeta:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Publicación no encontrada.")
+    
+    db.delete(tarjeta)
+    db.commit()
+    return {"mensaje": "Publicación eliminada correctamente."}
+
+
+# ==========================================
+# ✊ ENDPOINTS: TOCAR PUERTA
+# ==========================================
+
+@app.post("/api/contacto", response_model=schemas.SolicitudContactoResponse)
+def enviar_contacto(req: schemas.SolicitudContactoCreate, db: Session = Depends(get_db)):
+    nueva_solicitud = models.SolicitudContacto(
+        nombre=req.nombre,
+        email=req.email,
+        telefono=req.telefono,
+        redes=req.redes,
+        mensaje=req.mensaje
+    )
+    db.add(nueva_solicitud)
+    db.commit()
+    db.refresh(nueva_solicitud)
+    return nueva_solicitud
+
+
+@app.get("/api/contacto/listar", response_model=List[schemas.SolicitudContactoResponse])
+def listar_contactos(db: Session = Depends(get_db), admin: models.Usuario = Depends(obtener_usuario_actual)):
+    if admin.rol not in ROLES_ADMINISTRATIVOS:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso reservado para el Trono y Webmaster.")
+    return db.query(models.SolicitudContacto).order_by(models.SolicitudContacto.fecha_creacion.desc()).all()
+
+
+@app.post("/api/contacto/{solicitud_id}/generar-codigo")
+def generar_codigo_contacto(solicitud_id: int, db: Session = Depends(get_db), admin: models.Usuario = Depends(obtener_usuario_actual)):
+    if admin.rol not in ROLES_ADMINISTRATIVOS:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
+    
+    sol = db.query(models.SolicitudContacto).filter(models.SolicitudContacto.id == solicitud_id).first()
+    if not sol:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Solicitud no encontrada.")
     
     nuevo_codigo = f"TRONO149-{str(uuid.uuid4())[:5].upper()}"
+    sol.codigo_generado = nuevo_codigo
     
-    pase = models.CodigoPase(
-        codigo=nuevo_codigo,
-        creado_por=autor.usuario
-    )
+    pase = models.CodigoPase(codigo=nuevo_codigo, creado_por=admin.usuario)
     db.add(pase)
     db.commit()
-    db.refresh(pase)
-    return pase
-
-
-@app.get("/api/codigos/listar", response_model=List[schemas.CodigoPaseResponse])
-def listar_codigos_pase(db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
-    if autor.rol not in ROLES_ADMINISTRATIVOS:
-        raise HTTPException(status_code=403, detail="Acceso denegado a la cámara de pases.")
     
-    return db.query(models.CodigoPase).order_by(models.CodigoPase.fecha_creacion.desc()).all()
+    return {"codigo": nuevo_codigo}
 
 
 # ==========================================
-# 📐 ENDPOINTS DEL CENSO
+# 📜 ENDPOINTS: TRAZADOS
 # ==========================================
 
-@app.post("/api/censo/consignar", response_model=schemas.CensoResponse)
-def registrar_en_censo(req: schemas.CensoCreate, db: Session = Depends(get_db)):
-    cedula_existente = db.query(models.Censo).filter(models.Censo.cedula == req.cedula).first()
-    if cedula_existente:
-        raise HTTPException(status_code=400, detail="Esta cédula ya tiene una planilla de censo registrada.")
-    
-    nueva_planilla = models.Censo(
-        nombre=req.nombre,
-        cedula=req.cedula,
-        correo=req.correo,
-        telefono=req.telefono,
-        grado=req.grado,
-        profesion=req.profesion,
-        nacimiento=req.nacimiento,
-        direccion=req.direccion,
-        pregunta_mascota=req.pregunta_mascota,
-        pregunta_pelicula=req.pregunta_pelicula,
-        pregunta_deporte=req.pregunta_deporte
-    )
-    db.add(nueva_planilla)
-    db.commit()
-    db.refresh(nueva_planilla)
-    return nueva_planilla
+@app.get("/api/trazados", response_model=List[schemas.TrazadoResponse])
+def listar_trazados(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
+    return db.query(models.Trazado).order_by(models.Trazado.fecha_publicacion.desc()).all()
 
-
-@app.get("/api/censo/listar", response_model=List[schemas.CensoResponse])
-def ver_planillas_censo(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    roles_permitidos = ROLES_ADMINISTRATIVOS + ["primer_vigilante", "segundo_vigilante"]
-    if usuario.rol not in roles_permitidos:
-        raise HTTPException(status_code=403, detail="No posees el rango para auditar el Censo.")
-    
-    return db.query(models.Censo).order_by(models.Censo.fecha_creacion.desc()).all()
-
-
-@app.patch("/api/censo/{planilla_id}/estado")
-def dictaminar_planilla(
-    planilla_id: int, 
-    nuevo_estado: str,
-    db: Session = Depends(get_db), 
-    usuario: models.Usuario = Depends(obtener_usuario_actual)
-):
-    roles_permitidos = ROLES_ADMINISTRATIVOS + ["primer_vigilante", "segundo_vigilante"]
-    if usuario.rol not in roles_permitidos:
-        raise HTTPException(status_code=403, detail="No posees autoridad para dictaminar el censo.")
-    
-    planilla = db.query(models.Censo).filter(models.Censo.id == planilla_id).first()
-    if not planilla:
-        raise HTTPException(status_code=404, detail="Planilla no encontrada.")
-    
-    if nuevo_estado not in ["Aprobado", "Rechazado"]:
-        raise HTTPException(status_code=400, detail="Estado inválido.")
-    
-    planilla.estado = nuevo_estado
-    db.commit()
-    return {"mensaje": f"Planilla marcada como {nuevo_estado} con éxito."}
-
-
-# ==========================================
-# 📜 ENDPOINTS DE TRAZADOS Y DIVULGACIÓN
-# ==========================================
 
 @app.post("/api/trazados", response_model=schemas.TrazadoResponse)
 def crear_trazado(req: schemas.TrazadoCreate, db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
-    if autor.rol == "aprendiz":
-        raise HTTPException(status_code=403, detail="Los Aprendices no tienen permitido publicar Trazados.")
-    
     nuevo_trazado = models.Trazado(
         titulo=req.titulo,
         contenido=req.contenido,
-        autor=autor.nombre_real,
-        rol_autor=autor.rol,
-        camara_destino=req.camara_destino
+        camara_destino=req.camara_destino,
+        autor=autor.nombre_real
     )
     db.add(nuevo_trazado)
     db.commit()
@@ -247,103 +242,19 @@ def crear_trazado(req: schemas.TrazadoCreate, db: Session = Depends(get_db), aut
     return nuevo_trazado
 
 
-@app.get("/api/trazados", response_model=List[schemas.TrazadoResponse])
-def ver_trazados(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    query = db.query(models.Trazado)
-    
-    if usuario.rol in ROLES_ADMINISTRATIVOS or usuario.rol == "maestro":
-        pass  # Maestros y Webmaster ven todos los trazados
-    elif usuario.rol == "companero":
-        query = query.filter(models.Trazado.camara_destino.in_(["aprendiz", "companero"]))
-    else:
-        query = query.filter(models.Trazado.camara_destino == "aprendiz")
-    
-    return query.order_by(models.Trazado.fecha_publicacion.desc()).all()
-
-
 @app.delete("/api/trazados/{trazado_id}")
-def borrar_trazado(trazado_id: int, db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    if usuario.rol not in ROLES_ADMINISTRATIVOS:
-        raise HTTPException(status_code=403, detail="Solo la Dignidad del Trono o el Webmaster pueden borrar trazados.")
+def eliminar_trazado(trazado_id: int, db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
+    if autor.rol not in ROLES_ADMINISTRATIVOS:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
     
     trazado = db.query(models.Trazado).filter(models.Trazado.id == trazado_id).first()
     if not trazado:
-        raise HTTPException(status_code=404, detail="Trazado no encontrado.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trazado no encontrado.")
     
     db.delete(trazado)
     db.commit()
-    return {"mensaje": "Trazado eliminado correctamente."}
+    return {"mensaje": "Trazado eliminado."}
 
 
-# ==========================================
-# 💬 ENDPOINTS DEL CHAT
-# ==========================================
-
-@app.post("/api/chat", response_model=schemas.ChatMensajeResponse)
-def enviar_mensaje_chat(req: schemas.ChatMensajeCreate, db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    roles_permitidos = ROLES_ADMINISTRATIVOS + ["primer_vigilante", "segundo_vigilante", "maestro"]
-    if usuario.rol not in roles_permitidos:
-        raise HTTPException(status_code=403, detail="Solo los Maestros Masones y el Webmaster pueden hablar en el chat.")
-    
-    nuevo_mensaje = models.ChatMensaje(
-        usuario_nombre=usuario.nombre_real,
-        rol_usuario=usuario.rol,
-        mensaje=req.mensaje
-    )
-    db.add(nuevo_mensaje)
-    db.commit()
-    db.refresh(nuevo_mensaje)
-    return nuevo_mensaje
-
-
-@app.get("/api/chat", response_model=List[schemas.ChatMensajeResponse])
-def ver_mensajes_chat(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    roles_permitidos = ROLES_ADMINISTRATIVOS + ["primer_vigilante", "segundo_vigilante", "maestro"]
-    if usuario.rol not in roles_permitidos:
-        raise HTTPException(status_code=403, detail="El chat de la Cámara del Medio está oculto a tus ojos.")
-    
-    return db.query(models.ChatMensaje).order_by(models.ChatMensaje.fecha_envio.desc()).limit(50).all()
-
-
-# ==========================================
-# 👑 ENDPOINTS DE GESTIÓN DE CUADRO LOGIAL (WEBMASTER / TRONO)
-# ==========================================
-
-class ActualizarRolRequest(BaseModel):
-    grado: str
-    rol: str
-
-@app.patch("/api/usuarios/{usuario_id}/rol")
-def actualizar_rol_hermano(
-    usuario_id: int,
-    req: ActualizarRolRequest,
-    db: Session = Depends(get_db),
-    admin: models.Usuario = Depends(obtener_usuario_actual)
-):
-    if admin.rol not in ROLES_ADMINISTRATIVOS:
-        raise HTTPException(
-            status_code=403, 
-            detail="Solo el Webmaster o Dignidades pueden modificar grados o roles."
-        )
-    
-    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
-    
-    usuario.rol = req.rol
-    if hasattr(usuario, "grado"):
-        usuario.grado = req.grado
-        
-    db.commit()
-    return {"mensaje": f"Rol de {usuario.nombre_real} actualizado a {req.rol} ({req.grado})."}
-
-
-# ==========================================
-# 📁 MONTAR ARCHIVOS ESTÁTICOS (AL FINAL DE MAIN.PY)
-# ==========================================
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
-
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+# Servir Frontend Estático
+app.mount("/", StaticFiles(directory=".", html=True), name="static")

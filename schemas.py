@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional, Union
+from typing import Optional, Union, List
 from datetime import datetime
 
 # ==========================================
@@ -7,90 +7,120 @@ from datetime import datetime
 # ==========================================
 
 class LoginRequest(BaseModel):
-    """Esquema para que las Dignidades e Iniciados soliciten acceso."""
     usuario: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=6)
 
 
 class RegistroRequest(BaseModel):
-    """
-    Esquema de registro obligatorio. 
-    Exige la palabra de pase física para poder crear el usuario en el Templo.
-    """
     usuario: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=6)
     nombre_real: str = Field(..., min_length=3, max_length=100)
-    
-    # Jerarquía estricta de roles autorizados
     rol: str = Field("aprendiz", description="trono, venerable_maestro, primer_vigilante, segundo_vigilante, maestro, companero, aprendiz")
-    
-    # Condición crítica: El código de pase que valide este registro
-    codigo_pase: str = Field(..., description="Palabra de pase generada previamente por el Trono o el Venerable Maestro")
+    grado: Optional[str] = Field("Aprendiz", description="Aprendiz, Compañero, Maestro Masón")
+    codigo_pase: str = Field(..., description="Palabra de pase generada por el Trono o Webmaster")
+    respuesta_secreta: Optional[str] = Field(None, description="Respuesta a la pregunta de seguridad")
+
+
+class RecuperarPasswordRequest(BaseModel):
+    usuario: str
+    respuesta_secreta: str
+    nueva_password: str = Field(..., min_length=6)
 
 
 class UsuarioResponse(BaseModel):
-    """Esquema seguro para devolver datos del usuario sin revelar el hash de contraseña."""
     id: int
     usuario: str
     nombre_real: str
     rol: str
+    grado: Optional[str] = "Aprendiz"
     fecha_registro: Optional[Union[datetime, str]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
-# 📐 ESQUEMAS DEL CENSO (TOCAR PUERTAS)
+# 🏛️ PASOS PERDIDOS (PUBLICACIONES PÚBLICAS)
 # ==========================================
 
-class CensoCreate(BaseModel):
-    """Planilla de solicitud de Censo que envían los profanos o HH.'. visitadores."""
+class TarjetaPasosPerdidosCreate(BaseModel):
+    titulo: str = Field(..., min_length=3)
+    contenido: str = Field(..., min_length=10)
+    categoria: str = Field("principios", description="principios, docencia, accion, biblioteca")
+    url_pdf: Optional[str] = None
+
+
+class TarjetaPasosPerdidosResponse(BaseModel):
+    id: int
+    titulo: str
+    contenido: str
+    categoria: str
+    url_pdf: Optional[str] = None
+    autor: str
+    fecha: Optional[Union[datetime, str]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================================
+# ✊ TOCAR PUERTA (SOLICITUDES PROFANAS)
+# ==========================================
+
+class SolicitudContactoCreate(BaseModel):
     nombre: str = Field(..., min_length=3)
-    cedula: str = Field(..., min_length=5)
-    correo: EmailStr
-    telefono: Optional[str] = None
-    grado: str = Field("Aprendiz", description="Aprendiz, Compañero, Maestro Masón, Past Master")
-    profesion: Optional[str] = None
-    nacimiento: Optional[str] = None
-    direccion: Optional[str] = None
-    
-    # Respuestas de seguridad para validar identidad
-    pregunta_mascota: Optional[str] = None
-    pregunta_pelicula: Optional[str] = None
-    pregunta_deporte: Optional[str] = None
+    email: EmailStr
+    telefono: str
+    redes: Optional[str] = None
+    mensaje: str = Field(..., min_length=5)
 
 
-class CensoResponse(BaseModel):
-    """Esquema para mostrar las planillas registradas a los Vigilantes y al Venerable Maestro."""
+class SolicitudContactoResponse(BaseModel):
     id: int
     nombre: str
-    cedula: str
-    correo: str
-    telefono: Optional[str]
-    grado: str
-    profesion: Optional[str]
-    nacimiento: Optional[str]
-    direccion: Optional[str]
-    pregunta_mascota: Optional[str]
-    pregunta_pelicula: Optional[str]
-    pregunta_deporte: Optional[str]
-    estado: str  # 'Pendiente', 'Aprobado', 'Rechazado'
+    email: str
+    telefono: str
+    redes: Optional[str]
+    mensaje: str
+    codigo_generado: Optional[str] = None
     fecha_creacion: Optional[Union[datetime, str]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
-# 🎫 ESQUEMAS DE PALABRAS DE PASE (CÓDIGOS)
+# 🗳️ BALOTAJE Y ESCRUTINIO SECRETO
 # ==========================================
 
-class CodigoPaseCreate(BaseModel):
-    """Esquema para que el Trono o el Venerable soliciten un nuevo código de pase."""
-    creado_por: str
+class BalotajeCreate(BaseModel):
+    candidato: str
+    motivo: str
+    descripcion: str
+    fecha_inicio: Optional[str] = None
+    fecha_fin: Optional[str] = None
 
+
+class VotoBalotajeRequest(BaseModel):
+    tipo_voto: str = Field(..., description="'blanca' o 'negra'")
+
+
+class BalotajeResponse(BaseModel):
+    id: int
+    candidato: str
+    motivo: str
+    descripcion: str
+    fecha_inicio: Optional[str]
+    fecha_fin: Optional[str]
+    activo: bool
+    blancas: int
+    negras: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================================
+# 🎫 PALABRAS DE PASE & TRAZADOS
+# ==========================================
 
 class CodigoPaseResponse(BaseModel):
-    """Retorno de los pases en circulación."""
     id: int
     codigo: str
     creado_por: str
@@ -100,19 +130,13 @@ class CodigoPaseResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ==========================================
-# 📜 ESQUEMAS DE TRAZADOS (PUBLICACIONES)
-# ==========================================
-
 class TrazadoCreate(BaseModel):
-    """Esquema para publicar un nuevo trazado en una cámara específica."""
     titulo: str = Field(..., min_length=3)
     contenido: str = Field(..., min_length=10)
     camara_destino: str = Field("aprendiz", description="aprendiz, companero, maestro")
 
 
 class TrazadoResponse(BaseModel):
-    """Lectura de publicaciones permitidas por grado."""
     id: int
     titulo: str
     contenido: str
@@ -120,25 +144,5 @@ class TrazadoResponse(BaseModel):
     rol_autor: str
     camara_destino: str
     fecha_publicacion: Optional[Union[datetime, str]] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ==========================================
-# 💬 ESQUEMAS DE CHAT (EXCLUSIVO MAESTROS)
-# ==========================================
-
-class ChatMensajeCreate(BaseModel):
-    """Envío de mensajes en la cámara."""
-    mensaje: str = Field(..., min_length=1)
-
-
-class ChatMensajeResponse(BaseModel):
-    """Historial del chat."""
-    id: int
-    usuario_nombre: str
-    rol_usuario: str
-    mensaje: str
-    fecha_envio: Optional[Union[datetime, str]] = None
 
     model_config = ConfigDict(from_attributes=True)

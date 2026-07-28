@@ -150,7 +150,6 @@ window.VistasProyectoLapis = {
             </div>
 
             <div>
-              <!-- Enlace de Descarga/Lectura en Nube para PDF (Biblioteca Digital) -->
               <template x-if="tarjeta.urlPdf">
                 <div class="mb-4">
                   <a :href="tarjeta.urlPdf" target="_blank" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs px-3 py-2 rounded-lg font-bold transition-colors shadow">
@@ -264,7 +263,7 @@ window.VistasProyectoLapis = {
     </div>
   `,
 
-  // 4. UMBRAL (CÁMARA DE TRAZADOS Y BALOTAJE)
+  // 4. UMBRAL (CÁMARA DE TRAZADOS, BALOTAJE Y CHAT DE CÁMARAS)
   umbral: `
     <template x-if="!usuarioLogueado">
       <div>
@@ -336,6 +335,11 @@ window.VistasProyectoLapis = {
                   class="py-3 px-6 border-b-2 text-sm font-medium transition-colors">
             📜 Cámara de Trazados
           </button>
+          <button @click="seccionUmbral = 'chat'" 
+                  :class="seccionUmbral === 'chat' ? 'border-amber-600 text-amber-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                  class="py-3 px-6 border-b-2 text-sm font-medium transition-colors flex items-center gap-2">
+            <span>💬</span> Chat de Cámaras
+          </button>
           <button @click="seccionUmbral = 'balotaje'" 
                   :class="seccionUmbral === 'balotaje' ? 'border-amber-600 text-amber-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'"
                   class="py-3 px-6 border-b-2 text-sm font-medium transition-colors flex items-center gap-2">
@@ -384,7 +388,85 @@ window.VistasProyectoLapis = {
           </div>
         </div>
 
-        <!-- 2. VISTA SECCIÓN DE BALOTAJE -->
+        <!-- 2. VISTA CHAT INTERNO DE CÁMARAS -->
+        <div x-show="seccionUmbral === 'chat'" class="space-y-6">
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold text-slate-800 mb-1">Salas de Chat de Cámara</h2>
+            <p class="text-slate-500 text-sm mb-6">Comunicación interna y fraterna por nivel de jerarquía y grado simbólico.</p>
+            
+            <!-- Selector de Salas -->
+            <div class="grid sm:grid-cols-3 gap-4 mb-6">
+              <button @click="salaChatActual = 'aprendiz'" 
+                      :class="salaChatActual === 'aprendiz' ? 'bg-amber-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                      class="p-4 rounded-xl text-left transition-all flex flex-col justify-between border border-amber-500/20">
+                <div>
+                  <div class="font-bold text-sm mb-1">📐 Cámara de Aprendiz</div>
+                  <div class="text-xs opacity-90">Acceso: Aprendices, Compañeros, Maestros, Venerable y Webmaster.</div>
+                </div>
+                <div class="text-[10px] uppercase tracking-wider font-bold mt-3 text-right">Sala General</div>
+              </button>
+
+              <button @click="if(puedeAccederSalaChat('companero')) { salaChatActual = 'companero'; } else { Swal.fire({icon:'error', title:'Acceso Denegado', text:'Reservado para Compañeros, Maestros, Venerable y Webmaster.'}); }"
+                      :class="salaChatActual === 'companero' ? 'bg-amber-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                      class="p-4 rounded-xl text-left transition-all flex flex-col justify-between border border-amber-500/20 relative">
+                <div>
+                  <div class="font-bold text-sm mb-1 flex items-center justify-between">
+                    <span>📐📐 Cámara de Compañero</span>
+                    <span x-show="!puedeAccederSalaChat('companero')" class="text-xs">🔒</span>
+                  </div>
+                  <div class="text-xs opacity-90">Acceso: Compañeros, Maestros, Venerable y Webmaster.</div>
+                </div>
+                <div class="text-[10px] uppercase tracking-wider font-bold mt-3 text-right">Segunda Cámara</div>
+              </button>
+
+              <button @click="if(puedeAccederSalaChat('maestro')) { salaChatActual = 'maestro'; } else { Swal.fire({icon:'error', title:'Acceso Denegado', text:'Reservado para Maestros, Venerable y Webmaster.'}); }"
+                      :class="salaChatActual === 'maestro' ? 'bg-amber-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                      class="p-4 rounded-xl text-left transition-all flex flex-col justify-between border border-amber-500/20 relative">
+                <div>
+                  <div class="font-bold text-sm mb-1 flex items-center justify-between">
+                    <span>🏛️ Cámara de Maestros</span>
+                    <span x-show="!puedeAccederSalaChat('maestro')" class="text-xs">🔒</span>
+                  </div>
+                  <div class="text-xs opacity-90">Acceso: Maestros, Venerable Maestro y Webmaster.</div>
+                </div>
+                <div class="text-[10px] uppercase tracking-wider font-bold mt-3 text-right">Tercera Cámara</div>
+              </button>
+            </div>
+
+            <!-- Interfaz del Chat Dinámico -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col h-[400px]">
+              <!-- Ventana de Mensajes -->
+              <div class="flex-grow overflow-y-auto space-y-3 pr-2">
+                <template x-for="m in mensajesChatFiltrados" :key="m.id">
+                  <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm max-w-2xl">
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="font-bold text-xs text-amber-700" x-text="m.autor + ' (' + m.grado + ')'"></span>
+                      <span class="text-[10px] text-slate-400" x-text="m.fecha"></span>
+                    </div>
+                    <p class="text-sm text-slate-800" x-text="m.texto"></p>
+                  </div>
+                </template>
+                <template x-if="mensajesChatFiltrados.length === 0">
+                  <div class="h-full flex items-center justify-center text-slate-400 italic text-sm">
+                    No hay intervenciones registradas en esta cámara.
+                  </div>
+                </template>
+              </div>
+
+              <!-- Formulario de Envío de Mensaje -->
+              <div class="mt-4 pt-3 border-t border-slate-200 flex gap-2">
+                <input type="text" x-model="nuevoMensajeChat" @keydown.enter="enviarMensajeChat()" 
+                       placeholder="Escribe tu trazado verbal para la cámara..." 
+                       class="flex-grow border-slate-300 rounded-lg p-2.5 border text-sm focus:ring-amber-500 focus:border-amber-500">
+                <button @click="enviarMensajeChat()" class="bg-slate-900 hover:bg-slate-800 text-amber-400 px-5 py-2.5 rounded-lg text-sm font-bold transition-colors">
+                  Enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. VISTA SECCIÓN DE BALOTAJE -->
         <div x-show="seccionUmbral === 'balotaje'" class="space-y-6">
           <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div>
@@ -410,7 +492,6 @@ window.VistasProyectoLapis = {
                 <p class="text-xs text-amber-700 font-bold uppercase mb-2" x-text="b.motivo"></p>
                 <p class="text-slate-600 text-sm mb-3" x-text="b.descripcion"></p>
 
-                <!-- Fechas del Balotaje -->
                 <template x-if="b.fechaInicio || b.fechaFin">
                   <div class="flex items-center gap-4 text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
                     <span x-show="b.fechaInicio"><b>Inicio:</b> <span x-text="b.fechaInicio"></span></span>
@@ -418,7 +499,6 @@ window.VistasProyectoLapis = {
                   </div>
                 </template>
 
-                <!-- Área de Votación -->
                 <template x-if="b.activo">
                   <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mt-4">
                     <p class="text-xs font-bold text-slate-700 mb-3 text-center">Emitir Balota Secreta:</p>
@@ -433,7 +513,6 @@ window.VistasProyectoLapis = {
                   </div>
                 </template>
 
-                <!-- Informe para Webmaster/Trono -->
                 <template x-if="esAdministradorOWebmaster()">
                   <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
                     <div>

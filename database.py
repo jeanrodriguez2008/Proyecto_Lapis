@@ -1,11 +1,14 @@
 import os
-import hashlib
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from dotenv import load_dotenv
+from passlib.context import CryptContext
 
 # Cargar variables de entorno desde el archivo .env si existe
 load_dotenv()
+
+# Contexto para manejo de contraseñas con bcrypt
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Leer la URL de la base de datos desde variables de entorno (Neon Tech)
 # Si no está definida, usará una base de datos SQLite local para pruebas rápidas
@@ -60,7 +63,7 @@ def init_db():
         # 1. Verificar y sembrar al Webmaster (Trono Supremo / Administrador)
         webmaster_user = db.query(models.Usuario).filter(models.Usuario.usuario == "webmaster").first()
         if not webmaster_user:
-            pass_webmaster = hashlib.sha256("admin12345".encode("utf-8")).hexdigest()
+            pass_webmaster = pwd_context.hash("admin12345")
             admin_default = models.Usuario(
                 usuario="webmaster",
                 password_hash=pass_webmaster,
@@ -73,7 +76,7 @@ def init_db():
         # 2. Verificar y sembrar al Venerable Maestro
         venerable_user = db.query(models.Usuario).filter(models.Usuario.usuario == "venerable").first()
         if not venerable_user:
-            pass_venerable = hashlib.sha256("lapis123".encode("utf-8")).hexdigest()
+            pass_venerable = pwd_context.hash("lapis123")
             venerable_default = models.Usuario(
                 usuario="venerable",
                 password_hash=pass_venerable,

@@ -4,10 +4,19 @@ document.addEventListener('alpine:init', () => {
     // Estado de Navegación y Sesión
     vistaActual: 'pasos_perdidos',
     seccionUmbral: 'trazados',
-    categoriaPasosPerdidos: 'todos', // Filtro dinámico de tarjetas: 'todos', 'principios', 'docencia', 'accion', 'biblioteca'
-    modoRecuperar: false, // Aseguramos que inicie en false
+    categoriaPasosPerdidos: 'todos',
+    modoRecuperar: false,
     usuarioLogueado: null,
     contadorVisitas: 149,
+
+    // Gestión del Chat Interno
+    salaChatActual: 'aprendiz',
+    nuevoMensajeChat: '',
+    mensajesChat: [
+      { id: 1, sala: 'aprendiz', autor: 'Carlos Mendoza', grado: '1º - Aprendiz', texto: 'Fraterno saludo a la Cámara de Aprendiz.', fecha: '2026-07-28 10:00' },
+      { id: 2, sala: 'companero', autor: 'Hermano Compañero B.', grado: '2º - Compañero', texto: 'Senda de trabajo en la segunda cámara.', fecha: '2026-07-28 10:15' },
+      { id: 3, sala: 'maestro', autor: 'Venerable Maestro Actual', grado: '3º - Maestro', texto: 'Trazados y trabajos del Magisterio.', fecha: '2026-07-28 10:30' }
+    ],
 
     // Catálogo de los 33 Grados del R.E.A.A.
     gradosREAA: [
@@ -46,7 +55,7 @@ document.addEventListener('alpine:init', () => {
       { id: 33, nombre: '33º - Soberano Gran Inspector General' }
     ],
 
-    // Datos Dinámicos de Pasos Perdidos con Categorías e Hipervínculos PDF
+    // Publicaciones Dinámicas de Pasos Perdidos
     tarjetasDinamicas: [
       {
         id: 1,
@@ -75,7 +84,7 @@ document.addEventListener('alpine:init', () => {
         autor: 'Hospitalario',
         fecha: '2026-07-12'
       },
-      {
+        {
         id: 4,
         titulo: 'Constitución Masónica General',
         categoria: 'biblioteca',
@@ -117,13 +126,13 @@ document.addEventListener('alpine:init', () => {
       }
     ],
 
-    // Datos de Balotaje
+    // Procesos de Balotaje
     listaBalotajes: [
       {
         id: 1,
         candidato: 'Venerable Maestro',
         motivo: 'INICIACION',
-        descripcion: 'Esta de acuerdo con iniciar a los profanos actuales?',
+        descripcion: '¿Está de acuerdo con iniciar a los profanos actuales?',
         activo: false,
         fechaInicio: '2026-07-20',
         fechaFin: '2026-07-27',
@@ -132,7 +141,7 @@ document.addEventListener('alpine:init', () => {
       }
     ],
 
-    // Lista de Contactos recibidos
+    // Solicitudes de Contacto
     listaSolicitudesContacto: [
       {
         id: 1,
@@ -145,7 +154,7 @@ document.addEventListener('alpine:init', () => {
       }
     ],
 
-    // Lista de Aspirantes Admitidos e Iniciados
+    // Aspirantes Admitidos
     aspirantesRegistrados: [
       {
         id: 1,
@@ -156,7 +165,7 @@ document.addEventListener('alpine:init', () => {
       }
     ],
 
-    // Cuadro Logial Único
+    // Cuadro Logial
     listaHermanos: [
       { id: 1, nombre: 'Webmaster', email: 'webmaster@lapis.com', grado: 'Webmaster', rol: 'webmaster', esFijo: true, password: 'lapis123' },
       { id: 2, nombre: 'Venerable Maestro Actual', email: 'venerable@lapis.com', grado: '3º - Maestro', rol: 'venerable_maestro', esFijo: false, password: 'lapis123' },
@@ -165,7 +174,7 @@ document.addEventListener('alpine:init', () => {
       { id: 5, nombre: 'Carlos Mendoza', email: 'carlos.m@gmail.com', grado: '1º - Aprendiz', rol: 'aprendiz', esFijo: false, password: 'lapis123' }
     ],
 
-    // Escalafón para promoción de usuarios
+    // Escalafón Interno
     escalafon: [
       { grado: '1º - Aprendiz', rol: 'aprendiz' },
       { grado: '2º - Compañero', rol: 'companero' },
@@ -173,17 +182,13 @@ document.addEventListener('alpine:init', () => {
       { grado: '3º - Maestro', rol: 'venerable_maestro' }
     ],
 
-    // Variables de Formularios
+    // Modelos de Formulario
     formContacto: { nombre: '', email: '', telefono: '', redes: '', mensaje: '' },
     formRegistro: { codigoPase: '', nombre: '', grado: '1º - Aprendiz', email: '', password: '', respuestaSecreta: '' },
     formLogin: { email: '', password: '' },
     formRecuperar: { email: '', respuestaSecreta: '', nuevaPassword: '' },
 
-    // Modales y Selección
-    modalAbierto: false,
-    trazadoSeleccionado: null,
-
-    // Método de Inicialización
+    // Inicialización del Estado
     async init() {
       const sesionGuardada = localStorage.getItem('lapis_sesion');
       if (sesionGuardada) {
@@ -200,17 +205,108 @@ document.addEventListener('alpine:init', () => {
         }
       }
 
-      try {
-        const dataVisitas = await window.apiConnection.get('/visitas');
-        if (dataVisitas && dataVisitas.total) {
-          this.contadorVisitas = dataVisitas.total;
+      if (window.apiConnection) {
+        try {
+          const remotePasos = await window.apiConnection.get('/pasos-perdidos');
+          if (remotePasos && Array.isArray(remotePasos) && remotePasos.length > 0) {
+            this.tarjetasDinamicas = remotePasos.map(p => ({
+              id: p.id,
+              titulo: p.titulo,
+              categoria: p.categoria,
+              contenido: p.contenido,
+              urlPdf: p.url_pdf || null,
+              autor: p.autor,
+              fecha: p.fecha ? p.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
+            }));
+          }
+        } catch (e) {
+          console.warn('Cargando tarjetas de Pasos Perdidos locales.');
         }
-      } catch (err) {
-        console.warn('Operando en modo local para contador de visitas');
+
+        try {
+          const remoteTrazados = await window.apiConnection.get('/trazados');
+          if (remoteTrazados && Array.isArray(remoteTrazados) && remoteTrazados.length > 0) {
+            this.trazados = remoteTrazados.map(t => ({
+              id: t.id,
+              titulo: t.titulo,
+              grado: t.camara_destino === 'companero' ? '2º - Compañero' : (t.camara_destino === 'maestro' ? '3º - Maestro' : '1º - Aprendiz'),
+              resumen: t.contenido.substring(0, 100) + '...',
+              contenido: t.contenido,
+              autor: t.autor,
+              fecha: t.fecha_publicacion ? t.fecha_publicacion.split('T')[0] : new Date().toISOString().split('T')[0]
+            }));
+          }
+        } catch (e) {
+          console.warn('Cargando trazados locales por defecto.');
+        }
+      }
+
+      if (this.usuarioLogueado) {
+        this.cargarBalotajesBackend();
       }
     },
 
-    // Permisos
+    async cargarBalotajesBackend() {
+      if (!window.apiConnection) return;
+      try {
+        const remoteBalotajes = await window.apiConnection.get('/balotajes');
+        if (remoteBalotajes && Array.isArray(remoteBalotajes) && remoteBalotajes.length > 0) {
+          this.listaBalotajes = remoteBalotajes.map(b => ({
+            id: b.id,
+            candidato: b.candidato,
+            motivo: b.motivo,
+            descripcion: b.descripcion,
+            activo: b.activo,
+            fechaInicio: b.fecha_inicio,
+            fechaFin: b.fecha_fin,
+            blancas: b.blancas,
+            negras: b.negras
+          }));
+        }
+      } catch (e) {
+        console.warn('Usando balotajes locales.');
+      }
+    },
+
+    // Permisos de Acceso a Salas de Chat
+    puedeAccederSalaChat(sala) {
+      if (!this.usuarioLogueado) return false;
+      const rol = this.usuarioLogueado.rol || '';
+      const grado = this.usuarioLogueado.grado || '';
+      const esMaestroOAlto = rol === 'webmaster' || rol === 'venerable_maestro' || rol === 'maestro' || grado.includes('Maestro') || grado === 'Webmaster';
+      const esCompanero = rol === 'companero' || grado.includes('Compañero');
+
+      if (sala === 'aprendiz') return true; // Todos los perfiles registrados ingresan a Aprendiz
+      if (sala === 'companero') return esCompanero || esMaestroOAlto;
+      if (sala === 'maestro') return esMaestroOAlto;
+      return false;
+    },
+
+    get mensajesChatFiltrados() {
+      return this.mensajesChat.filter(m => m.sala === this.salaChatActual);
+    },
+
+    enviarMensajeChat() {
+      if (!this.nuevoMensajeChat.trim()) return;
+      if (!this.puedeAccederSalaChat(this.salaChatActual)) {
+        Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'No tienes privilegios para participar en esta sala de chat.' });
+        return;
+      }
+
+      const hora = new Date().toISOString().replace('T', ' ').substring(0, 16);
+      this.mensajesChat.push({
+        id: Date.now(),
+        sala: this.salaChatActual,
+        autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Anónimo',
+        grado: this.usuarioLogueado ? this.usuarioLogueado.grado : '1º - Aprendiz',
+        texto: this.nuevoMensajeChat.trim(),
+        fecha: hora
+      });
+
+      this.nuevoMensajeChat = '';
+    },
+
+    // Evaluadores de Permisos
     esAdministradorOWebmaster() {
       if (!this.usuarioLogueado) return false;
       const rol = this.usuarioLogueado.rol;
@@ -224,7 +320,7 @@ document.addEventListener('alpine:init', () => {
     tienePermisoEdicionPasosPerdidos() {
       if (!this.usuarioLogueado) return false;
       const rol = this.usuarioLogueado.rol;
-      return rol === 'webmaster' || rol === 'venerable_maestro' || rol === 'maestro' || rol === 'trono' || rol === 'admin';
+      return rol === 'webmaster' || rol === 'venerable_maestro';
     },
 
     get tarjetasFiltradasPasosPerdidos() {
@@ -247,11 +343,9 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // Método de Iniciar Sesión Corregido con SweetAlert2
+    // Iniciar Sesión
     async iniciarSesion() {
-      // Forzar que el modo de recuperación permanezca desactivado
       this.modoRecuperar = false;
-
       const inputUsuario = this.formLogin.email ? this.formLogin.email.trim().toLowerCase() : '';
       const inputPassword = this.formLogin.password ? this.formLogin.password.trim() : '';
 
@@ -265,7 +359,40 @@ document.addEventListener('alpine:init', () => {
         return;
       }
 
-      // 1. Validar contra el listado local de cuentas
+      if (window.apiConnection) {
+        try {
+          const payload = {
+            usuario: inputUsuario.includes('@') ? inputUsuario.split('@')[0] : inputUsuario,
+            password: inputPassword
+          };
+          const respuesta = await window.apiConnection.post('/auth/login', payload);
+          
+          if (respuesta && respuesta.usuario) {
+            const esWebmaster = respuesta.usuario.rol === 'webmaster' || respuesta.usuario.usuario === 'webmaster';
+            this.usuarioLogueado = {
+              ...respuesta.usuario,
+              nombre: esWebmaster ? 'Webmaster' : (respuesta.usuario.nombre || respuesta.usuario.nombre_real),
+              grado: esWebmaster ? 'Webmaster' : respuesta.usuario.grado,
+              token: respuesta.token
+            };
+            localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
+            this.formLogin = { email: '', password: '' };
+            this.cargarBalotajesBackend();
+
+            Swal.fire({
+              icon: 'success',
+              title: '¡Bienvenido!',
+              text: 'Sesión iniciada correctamente',
+              timer: 2000,
+              showConfirmButton: false
+            });
+            return;
+          }
+        } catch (err) {
+          console.warn('Fallo la conexión API Backend, verificando catálogo local...');
+        }
+      }
+
       const usuarioLocal = this.listaHermanos.find(h => 
         (h.email && h.email.toLowerCase() === inputUsuario) || 
         (h.nombre && h.nombre.toLowerCase() === inputUsuario) || 
@@ -273,7 +400,6 @@ document.addEventListener('alpine:init', () => {
       );
 
       if (usuarioLocal) {
-        // Verificar contraseña
         const passCorrecta = usuarioLocal.password 
           ? (inputPassword === usuarioLocal.password) 
           : (inputPassword === 'lapis123');
@@ -290,6 +416,7 @@ document.addEventListener('alpine:init', () => {
           };
           localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
           this.formLogin = { email: '', password: '' };
+          this.cargarBalotajesBackend();
 
           Swal.fire({
             icon: 'success',
@@ -299,70 +426,33 @@ document.addEventListener('alpine:init', () => {
             showConfirmButton: false
           });
           return;
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Acceso Denegado',
-            text: 'Contraseña incorrecta',
-            confirmButtonColor: '#b91c1c'
-          });
-          return;
         }
       }
 
-      // 2. Si no es un usuario local registrado, intentar mediante backend
-      try {
-        const payload = {
-          usuario: inputUsuario.split('@')[0],
-          password: inputPassword
-        };
-        const respuesta = await window.apiConnection.post('/auth/login', payload);
-        
-        if (respuesta && respuesta.usuario) {
-          const esWebmaster = respuesta.usuario.rol === 'webmaster' || respuesta.usuario.usuario === 'webmaster';
-          this.usuarioLogueado = {
-            ...respuesta.usuario,
-            nombre: esWebmaster ? 'Webmaster' : (respuesta.usuario.nombre_real || respuesta.usuario.nombre),
-            grado: esWebmaster ? 'Webmaster' : respuesta.usuario.grado,
-            token: respuesta.token
-          };
-          localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
-          this.formLogin = { email: '', password: '' };
-
-          Swal.fire({
-            icon: 'success',
-            title: '¡Bienvenido!',
-            text: 'Sesión iniciada correctamente',
-            timer: 2000,
-            showConfirmButton: false
-          });
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Acceso Denegado',
-            text: 'Contraseña incorrecta',
-            confirmButtonColor: '#b91c1c'
-          });
-        }
-      } catch (err) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Acceso Denegado',
-          text: 'Contraseña incorrecta',
-          confirmButtonColor: '#b91c1c'
-        });
-      }
+      Swal.fire({
+        icon: 'error',
+        title: 'Acceso Denegado',
+        text: 'Usuario o contraseña incorrectos.',
+        confirmButtonColor: '#b91c1c'
+      });
     },
 
-    // Generar Código Único para Aspirante
+    // Generar Código Único para Aspirante desde Contacto
     async generarCodigoParaAspirante(solicitud) {
-      const aleatorio = Math.random().toString(36).substring(2, 7).toUpperCase();
-      const codigo = `TRONO149-${aleatorio}`;
-      
-      try {
-        await window.apiConnection.post('/codigos/generar', { email: solicitud.email, codigo: codigo });
-      } catch (err) {
-        console.log('Código generado localmente:', codigo);
+      let codigo = '';
+      if (window.apiConnection) {
+        try {
+          const resp = await window.apiConnection.post(`/contacto/${solicitud.id}/generar-codigo`);
+          if (resp && resp.codigo) {
+            codigo = resp.codigo;
+          }
+        } catch (err) {
+          const aleatorio = Math.random().toString(36).substring(2, 7).toUpperCase();
+          codigo = `TRONO149-${aleatorio}`;
+        }
+      } else {
+        const aleatorio = Math.random().toString(36).substring(2, 7).toUpperCase();
+        codigo = `TRONO149-${aleatorio}`;
       }
 
       solicitud.codigoGenerado = codigo;
@@ -375,8 +465,18 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    // Publicaciones Pasos Perdidos y Biblioteca Digital
+    // Modal para Nueva Tarjeta en Pasos Perdidos
     async abrirModalNuevaTarjeta() {
+      if (!this.tienePermisoEdicionPasosPerdidos()) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Acceso Denegado',
+          text: 'Esta sección solo puede ser editada por el Venerable Maestro y el Webmaster.',
+          confirmButtonColor: '#b91c1c'
+        });
+        return;
+      }
+
       const { value: formValues } = await Swal.fire({
         title: 'Nueva Publicación en Pasos Perdidos',
         html:
@@ -413,17 +513,46 @@ document.addEventListener('alpine:init', () => {
 
       if (formValues) {
         const [categoria, titulo, contenido, urlPdf] = formValues;
-        const nuevaTarjeta = {
-          id: Date.now(),
-          categoria: categoria,
-          titulo: titulo,
-          contenido: contenido,
-          urlPdf: urlPdf || null,
-          autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
-          fecha: new Date().toISOString().split('T')[0]
-        };
+        
+        let subidaConExito = false;
+        if (window.apiConnection) {
+          try {
+            const resp = await window.apiConnection.post('/pasos-perdidos', {
+              titulo: titulo,
+              contenido: contenido,
+              categoria: categoria,
+              url_pdf: urlPdf || null
+            });
 
-        this.tarjetasDinamicas.unshift(nuevaTarjeta);
+            if (resp && resp.id) {
+              this.tarjetasDinamicas.unshift({
+                id: resp.id,
+                categoria: resp.categoria,
+                titulo: resp.titulo,
+                contenido: resp.contenido,
+                urlPdf: resp.url_pdf || null,
+                autor: resp.autor,
+                fecha: resp.fecha ? resp.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
+              });
+              subidaConExito = true;
+            }
+          } catch (e) {
+            console.warn('Fallo petición API Pasos Perdidos.');
+          }
+        }
+
+        if (!subidaConExito) {
+          const nuevaTarjeta = {
+            id: Date.now(),
+            categoria: categoria,
+            titulo: titulo,
+            contenido: contenido,
+            urlPdf: urlPdf || null,
+            autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
+            fecha: new Date().toISOString().split('T')[0]
+          };
+          this.tarjetasDinamicas.unshift(nuevaTarjeta);
+        }
 
         Swal.fire({
           icon: 'success',
@@ -436,9 +565,19 @@ document.addEventListener('alpine:init', () => {
     },
 
     async eliminarTarjeta(id) {
+      if (!this.tienePermisoEdicionPasosPerdidos()) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Acceso Denegado',
+          text: 'Esta sección solo puede ser editada por el Venerable Maestro y el Webmaster.',
+          confirmButtonColor: '#b91c1c'
+        });
+        return;
+      }
+
       const result = await Swal.fire({
         title: '¿Confirmas la eliminación?',
-        text: 'Deseas eliminar esta publicación de Pasos Perdidos',
+        text: 'Deseas eliminar esta publicación de Pasos Perdidos.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#b91c1c',
@@ -448,7 +587,15 @@ document.addEventListener('alpine:init', () => {
       });
 
       if (result.isConfirmed) {
+        if (window.apiConnection) {
+          try {
+            await window.apiConnection.delete(`/pasos-perdidos/${id}`);
+          } catch (e) {
+            console.warn('Tarjeta eliminada localmente.');
+          }
+        }
         this.tarjetasDinamicas = this.tarjetasDinamicas.filter(t => t.id !== id);
+
         Swal.fire({
           icon: 'success',
           title: 'Eliminado',
@@ -464,7 +611,11 @@ document.addEventListener('alpine:init', () => {
         title: 'Crear Trazado',
         html:
           '<input id="swal-trazado-titulo" class="swal2-input" placeholder="Título del Trazado">' +
-          '<input id="swal-trazado-grado" class="swal2-input" placeholder="Grado (ej. 1º - Aprendiz)" value="1º - Aprendiz">' +
+          '<select id="swal-trazado-grado" class="swal2-input">' +
+          '  <option value="1º - Aprendiz">1º - Aprendiz</option>' +
+          '  <option value="2º - Compañero">2º - Compañero</option>' +
+          '  <option value="3º - Maestro">3º - Maestro</option>' +
+          '</select>' +
           '<input id="swal-trazado-resumen" class="swal2-input" placeholder="Resumen corto">' +
           '<textarea id="swal-trazado-contenido" class="swal2-textarea" placeholder="Contenido completo del trazado"></textarea>',
         focusConfirm: false,
@@ -479,20 +630,40 @@ document.addEventListener('alpine:init', () => {
           const contenido = document.getElementById('swal-trazado-contenido').value;
 
           if (!titulo || !resumen || !contenido) {
-            Swal.showValidationMessage('Todos los campos principales son obligatorios');
+            Swal.showValidationMessage('Todos los campos son obligatorios');
             return false;
           }
-          return { titulo, grado: grado || '1º - Aprendiz', resumen, contenido };
+          return { titulo, grado, resumen, contenido };
         }
       });
 
       if (formValues) {
-        const nuevoTrazado = {
+        let nuevoTrazado = {
           id: Date.now(),
           ...formValues,
           autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
           fecha: new Date().toISOString().split('T')[0]
         };
+
+        if (window.apiConnection) {
+          try {
+            let camara = 'aprendiz';
+            if (formValues.grado.includes('Compañero')) camara = 'companero';
+            if (formValues.grado.includes('Maestro')) camara = 'maestro';
+
+            const resp = await window.apiConnection.post('/trazados', {
+              titulo: formValues.titulo,
+              contenido: formValues.contenido,
+              camara_destino: camara
+            });
+
+            if (resp && resp.id) {
+              nuevoTrazado.id = resp.id;
+            }
+          } catch (e) {
+            console.warn('Trazado guardado en memoria local.');
+          }
+        }
 
         this.trazados.unshift(nuevoTrazado);
 
@@ -509,7 +680,7 @@ document.addEventListener('alpine:init', () => {
     async eliminarTrazado(id) {
       const result = await Swal.fire({
         title: '¿Eliminar trazado?',
-        text: 'Deseas eliminar este trazado de la Cámara',
+        text: 'Deseas eliminar este trazado de la Cámara.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#b91c1c',
@@ -520,6 +691,14 @@ document.addEventListener('alpine:init', () => {
 
       if (result.isConfirmed) {
         this.trazados = this.trazados.filter(t => t.id !== id);
+        if (window.apiConnection) {
+          try {
+            await window.apiConnection.delete(`/trazados/${id}`);
+          } catch (e) {
+            console.warn('Trazado eliminado localmente.');
+          }
+        }
+
         Swal.fire({
           icon: 'success',
           title: 'Eliminado',
@@ -530,7 +709,6 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // Gestión de Balotaje
     async abrirModalCrearBalotaje() {
       const hoy = new Date().toISOString().split('T')[0];
       const { value: formValues } = await Swal.fire({
@@ -562,13 +740,35 @@ document.addEventListener('alpine:init', () => {
       });
 
       if (formValues) {
-        const nuevoBalotaje = {
+        let nuevoBalotaje = {
           id: Date.now(),
-          ...formValues,
+          candidato: formValues.candidato,
+          motivo: formValues.motivo,
+          descripcion: formValues.descripcion,
           activo: true,
+          fechaInicio: formValues.fechaInicio,
+          fechaFin: formValues.fechaFin,
           blancas: 0,
           negras: 0
         };
+
+        if (window.apiConnection) {
+          try {
+            const resp = await window.apiConnection.post('/balotajes', {
+              candidato: formValues.candidato,
+              motivo: formValues.motivo,
+              descripcion: formValues.descripcion,
+              fecha_inicio: formValues.fechaInicio,
+              fecha_fin: formValues.fechaFin
+            });
+
+            if (resp && resp.id) {
+              nuevoBalotaje.id = resp.id;
+            }
+          } catch (e) {
+            console.warn('Balotaje guardado localmente.');
+          }
+        }
 
         this.listaBalotajes.unshift(nuevoBalotaje);
 
@@ -582,25 +782,60 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    emitirVotoBalotaje(id, tipo) {
+    async emitirVotoBalotaje(id, tipo) {
       const balotaje = this.listaBalotajes.find(b => b.id === id);
       if (balotaje && balotaje.activo) {
-        if (tipo === 'blanca') balotaje.blancas++;
-        if (tipo === 'negra') balotaje.negras++;
+        if (window.apiConnection) {
+          try {
+            await window.apiConnection.post(`/balotajes/${id}/votar`, { tipo_voto: tipo });
+            if (tipo === 'blanca') balotaje.blancas++;
+            if (tipo === 'negra') balotaje.negras++;
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Voto Depositado',
-          text: 'Tu balota ha sido depositada de manera secreta en el saco.',
-          timer: 1800,
-          showConfirmButton: false
-        });
+            Swal.fire({
+              icon: 'success',
+              title: 'Voto Depositado',
+              text: 'Tu balota ha sido depositada de manera secreta en el saco.',
+              timer: 1800,
+              showConfirmButton: false
+            });
+          } catch (err) {
+            const msg = err.data && err.data.detail 
+              ? err.data.detail 
+              : 'Error al procesar la balota.';
+            
+            Swal.fire({
+              icon: 'error',
+              title: 'Voto No Registrado',
+              text: msg,
+              confirmButtonColor: '#b91c1c'
+            });
+          }
+        } else {
+          if (tipo === 'blanca') balotaje.blancas++;
+          if (tipo === 'negra') balotaje.negras++;
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Voto Depositado',
+            text: 'Tu balota ha sido depositada de manera secreta en el saco.',
+            timer: 1800,
+            showConfirmButton: false
+          });
+        }
       }
     },
 
-    cerrarBalotaje(id) {
+    async cerrarBalotaje(id) {
       const balotaje = this.listaBalotajes.find(b => b.id === id);
       if (balotaje) {
+        if (window.apiConnection) {
+          try {
+            await window.apiConnection.patch(`/balotajes/${id}/cerrar`);
+          } catch (e) {
+            console.warn('Balotaje cerrado localmente.');
+          }
+        }
+
         balotaje.activo = false;
         
         Swal.fire({
@@ -626,6 +861,14 @@ document.addEventListener('alpine:init', () => {
 
       if (result.isConfirmed) {
         this.listaBalotajes = this.listaBalotajes.filter(b => b.id !== id);
+        if (window.apiConnection) {
+          try {
+            await window.apiConnection.delete(`/balotajes/${id}`);
+          } catch (e) {
+            console.warn('Balotaje eliminado localmente.');
+          }
+        }
+
         Swal.fire({
           icon: 'success',
           title: 'Eliminado',
@@ -636,20 +879,25 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // Formularios
     async enviarContacto() {
       const solicitud = {
         id: Date.now(),
         ...this.formContacto,
         codigoGenerado: null
       };
-      this.listaSolicitudesContacto.unshift(solicitud);
 
-      try {
-        await window.apiConnection.post('/contacto', this.formContacto);
-      } catch (err) {
-        console.warn('Contacto registrado localmente.');
+      if (window.apiConnection) {
+        try {
+          const resp = await window.apiConnection.post('/contacto', this.formContacto);
+          if (resp && resp.id) {
+            solicitud.id = resp.id;
+          }
+        } catch (err) {
+          console.warn('Contacto registrado localmente.');
+        }
       }
+
+      this.listaSolicitudesContacto.unshift(solicitud);
 
       Swal.fire({
         icon: 'success',
@@ -672,18 +920,20 @@ document.addEventListener('alpine:init', () => {
         rolTecnico = 'maestro';
       }
 
-      try {
-        const payload = {
-          usuario: this.formRegistro.email.split('@')[0],
-          codigo_pase: this.formRegistro.codigoPase,
-          nombre_real: this.formRegistro.nombre,
-          password: this.formRegistro.password,
-          rol: rolTecnico,
-          grado: gradoTecnico
-        };
-        await window.apiConnection.post('/auth/registro', payload);
-      } catch (err) {
-        console.warn('Registro procesado dinámicamente.');
+      if (window.apiConnection) {
+        try {
+          const payload = {
+            usuario: this.formRegistro.email.split('@')[0],
+            codigo_pase: this.formRegistro.codigoPase,
+            nombre_real: this.formRegistro.nombre,
+            password: this.formRegistro.password,
+            rol: rolTecnico,
+            grado: gradoTecnico
+          };
+          await window.apiConnection.post('/auth/registro', payload);
+        } catch (err) {
+          console.warn('Registro procesado dinámicamente.');
+        }
       }
 
       const nuevoRegistrado = {
@@ -755,7 +1005,6 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // Eliminar Aspirante Admitido
     async eliminarAspiranteAdmitido(asp) {
       const result = await Swal.fire({
         title: '¿Confirmas la eliminación?',
@@ -772,10 +1021,12 @@ document.addEventListener('alpine:init', () => {
         this.aspirantesRegistrados = this.aspirantesRegistrados.filter(a => a.id !== asp.id);
         this.listaHermanos = this.listaHermanos.filter(h => h.nombre !== asp.nombre && h.email !== asp.email);
 
-        try {
-          await window.apiConnection.delete(`/aspirantes/${asp.id}`);
-        } catch (e) {
-          console.warn('Eliminado localmente.');
+        if (window.apiConnection) {
+          try {
+            await window.apiConnection.delete(`/aspirantes/${asp.id}`);
+          } catch (e) {
+            console.warn('Eliminado localmente.');
+          }
         }
 
         Swal.fire({
@@ -788,7 +1039,6 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // Eliminar Hermano del Cuadro Logial
     async eliminarHermanoCuadro(hermano) {
       if (hermano.esFijo || hermano.rol === 'webmaster') {
         Swal.fire({
@@ -814,10 +1064,12 @@ document.addEventListener('alpine:init', () => {
       if (result.isConfirmed) {
         this.listaHermanos = this.listaHermanos.filter(h => h.id !== hermano.id);
 
-        try {
-          await window.apiConnection.delete(`/usuarios/${hermano.id}`);
-        } catch (e) {
-          console.warn('Eliminado localmente.');
+        if (window.apiConnection) {
+          try {
+            await window.apiConnection.delete(`/usuarios/${hermano.id}`);
+          } catch (e) {
+            console.warn('Eliminado localmente.');
+          }
         }
 
         Swal.fire({
@@ -831,21 +1083,37 @@ document.addEventListener('alpine:init', () => {
     },
 
     async procesarRecuperacion() {
-      try {
-        await window.apiConnection.post('/recuperar-password', this.formRecuperar);
-      } catch (err) {
-        console.warn('Procesado localmente.');
+      if (window.apiConnection) {
+        try {
+          const payload = {
+            usuario: this.formRecuperar.email.includes('@') ? this.formRecuperar.email.split('@')[0] : this.formRecuperar.email,
+            respuesta_secreta: this.formRecuperar.respuestaSecreta,
+            nueva_password: this.formRecuperar.nuevaPassword
+          };
+          await window.apiConnection.post('/auth/recuperar-password', payload);
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Contraseña Actualizada',
+            text: 'Contraseña actualizada con éxito. Ya puedes iniciar sesión.',
+            confirmButtonColor: '#d97706'
+          });
+
+          this.modoRecuperar = false;
+          this.formRecuperar = { email: '', respuestaSecreta: '', nuevaPassword: '' };
+        } catch (err) {
+          const msg = err.data && err.data.detail 
+            ? err.data.detail 
+            : 'Error al recuperar la contraseña. Verifica tus datos.';
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de Recuperación',
+            text: msg,
+            confirmButtonColor: '#b91c1c'
+          });
+        }
       }
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Contraseña Actualizada',
-        text: 'Contraseña actualizada con éxito. Ya puedes iniciar sesión.',
-        confirmButtonColor: '#d97706'
-      });
-
-      this.modoRecuperar = false;
-      this.formRecuperar = { email: '', respuestaSecreta: '', nuevaPassword: '' };
     },
 
     cerrarSesion() {
@@ -863,7 +1131,6 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    // Gestión de Roles Protegida
     obtenerIndiceEscalafon(hermano) {
       return this.escalafon.findIndex(
         e => e.rol === hermano.rol || (e.grado === hermano.grado && e.rol === hermano.rol)
@@ -889,13 +1156,15 @@ document.addEventListener('alpine:init', () => {
         this.listaHermanos = [...this.listaHermanos];
       }
 
-      try {
-        await window.apiConnection.patch(`/usuarios/${hermano.id}/rol`, {
-          grado: nuevoGrado,
-          rol: nuevoRol
-        });
-      } catch (e) {
-        console.warn('Cambio aplicado localmente.');
+      if (window.apiConnection) {
+        try {
+          await window.apiConnection.patch(`/usuarios/${hermano.id}/rol`, {
+            grado: nuevoGrado,
+            rol: nuevoRol
+          });
+        } catch (e) {
+          console.warn('Cambio aplicado localmente.');
+        }
       }
     },
 
