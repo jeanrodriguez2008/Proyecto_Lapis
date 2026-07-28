@@ -259,7 +259,7 @@ document.addEventListener('alpine:init', () => {
       this.categoriaPasosPerdidos = (this.categoriaPasosPerdidos === cat) ? null : cat;
     },
 
-    // FUNCIÓN PARA ABRIR ARTÍCULOS DE PASOS PERDIDOS EN MODAL
+    // FUNCIÓN PARA ABRIR ARTÍCULOS DE PASOS PERDIDOS EN MODAL (AMPLIADO)
     verArticuloPasosPerdidos(tarjeta) {
       let botonPdf = '';
       if (tarjeta.urlPdf) {
@@ -268,6 +268,10 @@ document.addEventListener('alpine:init', () => {
 
       Swal.fire({
         title: tarjeta.titulo,
+        width: '800px',
+        customClass: {
+          htmlContainer: 'max-h-[70vh] overflow-y-auto text-left'
+        },
         html: `
           <div class="text-left text-sm space-y-3">
             <div class="flex justify-between items-center text-xs text-slate-500 border-b pb-2">
@@ -1311,6 +1315,10 @@ document.addEventListener('alpine:init', () => {
     verTrazadoCompleto(trazado) {
       Swal.fire({
         title: trazado.titulo,
+        width: '800px',
+        customClass: {
+          htmlContainer: 'max-h-[70vh] overflow-y-auto text-left'
+        },
         html: `<div class="text-left text-sm space-y-3"><p class="text-slate-600 border-b pb-2"><b>Autor:</b> ${trazado.autor}</p><div class="text-slate-800 leading-relaxed whitespace-pre-wrap">${trazado.contenido}</div></div>`,
         confirmButtonColor: '#d97706',
         confirmButtonText: 'Cerrar'
