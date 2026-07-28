@@ -256,5 +256,5 @@ def eliminar_trazado(trazado_id: int, db: Session = Depends(get_db), autor: mode
     return {"mensaje": "Trazado eliminado."}
 
 
-# Servir Frontend Estático
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
+# Servir Frontend Estático apuntando a la carpeta frontend
+app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
