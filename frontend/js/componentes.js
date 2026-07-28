@@ -1,6 +1,6 @@
 // Catálogo de Componentes HTML - Proyecto Lapis
 window.VistasProyectoLapis = {
-  // 1. PASOS PERDIDOS (INICIO CON TARJETAS INTERACTIVAS Y BIBLIOTECA DIGITAL)
+  // 1. PASOS PERDIDOS (INICIO CON TARJETAS INTERACTIVAS Y ACORDEONES)
   pasos_perdidos: `
     <section class="text-center py-12 px-4 bg-slate-900 text-white rounded-2xl shadow-xl mb-12 border border-amber-500/30 relative overflow-hidden">
       <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -20,166 +20,192 @@ window.VistasProyectoLapis = {
       </div>
     </section>
 
-    <!-- Tarjetas Interactivas como Filtro de Secciones (4 Columnas) -->
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-      <!-- Tarjeta 1: Principios Fundamentales -->
-      <div @click="categoriaPasosPerdidos = (categoriaPasosPerdidos === 'principios' ? 'todos' : 'principios')"
-           :class="categoriaPasosPerdidos === 'principios' ? 'ring-2 ring-amber-500 bg-amber-50/30 shadow-lg -translate-y-1' : 'bg-white hover:shadow-lg hover:-translate-y-1'"
-           class="p-6 rounded-xl shadow-md border-t-4 border-amber-500 transition-all duration-300 cursor-pointer flex flex-col justify-between select-none">
+    <!-- Botón de publicar superior solo visible para perfiles autorizados -->
+    <template x-if="tienePermisoEdicionPasosPerdidos()">
+      <div class="flex justify-end mb-6">
+        <button @click="abrirModalNuevaTarjeta()" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-md">
+          <span>+</span> Nueva Publicación
+        </button>
+      </div>
+    </template>
+
+    <!-- Grid de Tarjetas en Formato Acordeón (4 Columnas) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start mb-12">
+      
+      <!-- TARJETA 1: PRINCIPIOS FUNDAMENTALES -->
+      <div @click="toggleCategoriaAcordeon('principios')"
+           :class="categoriaPasosPerdidos === 'principios' ? 'ring-2 ring-amber-500 bg-amber-50/20 shadow-xl' : 'bg-white hover:shadow-lg'"
+           class="p-6 rounded-2xl border-t-4 border-amber-500 border-x border-b border-slate-200 transition-all duration-300 cursor-pointer select-none">
+        
         <div>
-          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center font-bold text-xl mb-4">
             🏛️
           </div>
           <h3 class="text-lg font-bold text-slate-800 mb-2">Principios Fundamentales</h3>
-          <p class="text-slate-600 text-sm leading-relaxed mb-4">
-            Cultivamos la fraternidad, la tolerancia, la libertad de pensamiento y la filantropía. Trabajamos para desbastar la piedra bruta en busca de la verdad.
+          <p class="text-slate-600 text-xs leading-relaxed mb-4">
+            Cultivamos la fraternidad, la tolerancia, la libertad de pensamiento y la filantropía. Trabajamos para desbastar la piedra bruta.
           </p>
         </div>
-        <div class="text-xs font-bold text-amber-600 flex items-center gap-1 pt-2 border-t border-slate-100">
-          <span x-text="categoriaPasosPerdidos === 'principios' ? '✓ Viendo sección' : 'Explorar artículos →'"></span>
+
+        <div class="text-xs font-bold text-amber-600 flex items-center justify-between pt-3 border-t border-slate-100">
+          <span x-text="categoriaPasosPerdidos === 'principios' ? 'Cerrar sección' : 'Ver publicaciones'"></span>
+          <span class="text-sm transition-transform duration-200" :class="categoriaPasosPerdidos === 'principios' ? 'rotate-180' : ''">▼</span>
+        </div>
+
+        <!-- Desplegable del Acordeón -->
+        <div x-show="categoriaPasosPerdidos === 'principios'" x-collapse class="mt-4 pt-4 border-t border-amber-200/60 space-y-3 cursor-default" @click.stop>
+          <template x-for="tarjeta in tarjetasDinamicas.filter(t => t.categoria === 'principios')" :key="tarjeta.id">
+            <div class="p-3.5 bg-white rounded-xl border border-amber-100 shadow-sm relative flex flex-col justify-between">
+              <div>
+                <h4 class="font-bold text-sm text-slate-800 mb-1" x-text="tarjeta.titulo"></h4>
+                <p class="text-xs text-slate-600 leading-relaxed mb-3" x-text="tarjeta.contenido"></p>
+              </div>
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                <span x-text="tarjeta.fecha"></span>
+                <template x-if="tienePermisoEdicionPasosPerdidos()">
+                  <button @click.stop="eliminarTarjeta(tarjeta.id)" class="text-red-500 font-bold hover:underline">Eliminar</button>
+                </template>
+              </div>
+            </div>
+          </template>
+          <template x-if="tarjetasDinamicas.filter(t => t.categoria === 'principios').length === 0">
+            <p class="text-xs text-slate-400 italic text-center py-2">Sin publicaciones aún en esta categoría.</p>
+          </template>
         </div>
       </div>
 
-      <!-- Tarjeta 2: Docencia y Tradición -->
-      <div @click="categoriaPasosPerdidos = (categoriaPasosPerdidos === 'docencia' ? 'todos' : 'docencia')"
-           :class="categoriaPasosPerdidos === 'docencia' ? 'ring-2 ring-amber-500 bg-amber-50/30 shadow-lg -translate-y-1' : 'bg-white hover:shadow-lg hover:-translate-y-1'"
-           class="p-6 rounded-xl shadow-md border-t-4 border-amber-500 transition-all duration-300 cursor-pointer flex flex-col justify-between select-none">
+      <!-- TARJETA 2: DOCENCIA Y TRADICIÓN -->
+      <div @click="toggleCategoriaAcordeon('docencia')"
+           :class="categoriaPasosPerdidos === 'docencia' ? 'ring-2 ring-blue-500 bg-blue-50/20 shadow-xl' : 'bg-white hover:shadow-lg'"
+           class="p-6 rounded-2xl border-t-4 border-blue-500 border-x border-b border-slate-200 transition-all duration-300 cursor-pointer select-none">
+        
         <div>
-          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+          <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold text-xl mb-4">
             📖
           </div>
           <h3 class="text-lg font-bold text-slate-800 mb-2">Docencia y Tradición</h3>
-          <p class="text-slate-600 text-sm leading-relaxed mb-4">
-            Preservamos el simbolismo ritualista como vehículo pedagógico para transmitir enseñanzas morales y filosóficas universales a través de los grados.
+          <p class="text-slate-600 text-xs leading-relaxed mb-4">
+            Preservamos el simbolismo ritualista como vehículo pedagógico para transmitir enseñanzas morales y filosóficas universales.
           </p>
         </div>
-        <div class="text-xs font-bold text-amber-600 flex items-center gap-1 pt-2 border-t border-slate-100">
-          <span x-text="categoriaPasosPerdidos === 'docencia' ? '✓ Viendo sección' : 'Filosofía e historia →'"></span>
+
+        <div class="text-xs font-bold text-blue-600 flex items-center justify-between pt-3 border-t border-slate-100">
+          <span x-text="categoriaPasosPerdidos === 'docencia' ? 'Cerrar sección' : 'Ver publicaciones'"></span>
+          <span class="text-sm transition-transform duration-200" :class="categoriaPasosPerdidos === 'docencia' ? 'rotate-180' : ''">▼</span>
+        </div>
+
+        <!-- Desplegable del Acordeón -->
+        <div x-show="categoriaPasosPerdidos === 'docencia'" x-collapse class="mt-4 pt-4 border-t border-blue-200/60 space-y-3 cursor-default" @click.stop>
+          <template x-for="tarjeta in tarjetasDinamicas.filter(t => t.categoria === 'docencia')" :key="tarjeta.id">
+            <div class="p-3.5 bg-white rounded-xl border border-blue-100 shadow-sm relative flex flex-col justify-between">
+              <div>
+                <h4 class="font-bold text-sm text-slate-800 mb-1" x-text="tarjeta.titulo"></h4>
+                <p class="text-xs text-slate-600 leading-relaxed mb-3" x-text="tarjeta.contenido"></p>
+              </div>
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                <span x-text="tarjeta.fecha"></span>
+                <template x-if="tienePermisoEdicionPasosPerdidos()">
+                  <button @click.stop="eliminarTarjeta(tarjeta.id)" class="text-red-500 font-bold hover:underline">Eliminar</button>
+                </template>
+              </div>
+            </div>
+          </template>
+          <template x-if="tarjetasDinamicas.filter(t => t.categoria === 'docencia').length === 0">
+            <p class="text-xs text-slate-400 italic text-center py-2">Sin publicaciones aún en esta categoría.</p>
+          </template>
         </div>
       </div>
 
-      <!-- Tarjeta 3: Acción Exterior -->
-      <div @click="categoriaPasosPerdidos = (categoriaPasosPerdidos === 'accion' ? 'todos' : 'accion')"
-           :class="categoriaPasosPerdidos === 'accion' ? 'ring-2 ring-amber-500 bg-amber-50/30 shadow-lg -translate-y-1' : 'bg-white hover:shadow-lg hover:-translate-y-1'"
-           class="p-6 rounded-xl shadow-md border-t-4 border-amber-500 transition-all duration-300 cursor-pointer flex flex-col justify-between select-none">
+      <!-- TARJETA 3: ACCIÓN EXTERIOR -->
+      <div @click="toggleCategoriaAcordeon('accion')"
+           :class="categoriaPasosPerdidos === 'accion' ? 'ring-2 ring-emerald-500 bg-emerald-50/20 shadow-xl' : 'bg-white hover:shadow-lg'"
+           class="p-6 rounded-2xl border-t-4 border-emerald-500 border-x border-b border-slate-200 transition-all duration-300 cursor-pointer select-none">
+        
         <div>
-          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+          <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-xl mb-4">
             🤝
           </div>
           <h3 class="text-lg font-bold text-slate-800 mb-2">Acción Exterior</h3>
-          <p class="text-slate-600 text-sm leading-relaxed mb-4">
-            Extendemos nuestra acción benéfica a la sociedad, promoviendo el progreso, la educación y el auxilio fraterno a quien lo necesite.
+          <p class="text-slate-600 text-xs leading-relaxed mb-4">
+            Extendemos nuestra acción benéfica a la sociedad, promoviendo el progreso, la educación y el auxilio fraterno a la comunidad.
           </p>
         </div>
-        <div class="text-xs font-bold text-amber-600 flex items-center gap-1 pt-2 border-t border-slate-100">
-          <span x-text="categoriaPasosPerdidos === 'accion' ? '✓ Viendo sección' : 'Eventos filantrópicos →'"></span>
+
+        <div class="text-xs font-bold text-emerald-600 flex items-center justify-between pt-3 border-t border-slate-100">
+          <span x-text="categoriaPasosPerdidos === 'accion' ? 'Cerrar sección' : 'Ver publicaciones'"></span>
+          <span class="text-sm transition-transform duration-200" :class="categoriaPasosPerdidos === 'accion' ? 'rotate-180' : ''">▼</span>
+        </div>
+
+        <!-- Desplegable del Acordeón -->
+        <div x-show="categoriaPasosPerdidos === 'accion'" x-collapse class="mt-4 pt-4 border-t border-emerald-200/60 space-y-3 cursor-default" @click.stop>
+          <template x-for="tarjeta in tarjetasDinamicas.filter(t => t.categoria === 'accion')" :key="tarjeta.id">
+            <div class="p-3.5 bg-white rounded-xl border border-emerald-100 shadow-sm relative flex flex-col justify-between">
+              <div>
+                <h4 class="font-bold text-sm text-slate-800 mb-1" x-text="tarjeta.titulo"></h4>
+                <p class="text-xs text-slate-600 leading-relaxed mb-3" x-text="tarjeta.contenido"></p>
+              </div>
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                <span x-text="tarjeta.fecha"></span>
+                <template x-if="tienePermisoEdicionPasosPerdidos()">
+                  <button @click.stop="eliminarTarjeta(tarjeta.id)" class="text-red-500 font-bold hover:underline">Eliminar</button>
+                </template>
+              </div>
+            </div>
+          </template>
+          <template x-if="tarjetasDinamicas.filter(t => t.categoria === 'accion').length === 0">
+            <p class="text-xs text-slate-400 italic text-center py-2">Sin publicaciones aún en esta categoría.</p>
+          </template>
         </div>
       </div>
 
-      <!-- Tarjeta 4: Biblioteca Digital -->
-      <div @click="categoriaPasosPerdidos = (categoriaPasosPerdidos === 'biblioteca' ? 'todos' : 'biblioteca')"
-           :class="categoriaPasosPerdidos === 'biblioteca' ? 'ring-2 ring-amber-500 bg-amber-50/30 shadow-lg -translate-y-1' : 'bg-white hover:shadow-lg hover:-translate-y-1'"
-           class="p-6 rounded-xl shadow-md border-t-4 border-amber-500 transition-all duration-300 cursor-pointer flex flex-col justify-between select-none">
+      <!-- TARJETA 4: BIBLIOTECA DIGITAL -->
+      <div @click="toggleCategoriaAcordeon('biblioteca')"
+           :class="categoriaPasosPerdidos === 'biblioteca' ? 'ring-2 ring-purple-500 bg-purple-50/20 shadow-xl' : 'bg-white hover:shadow-lg'"
+           class="p-6 rounded-2xl border-t-4 border-purple-500 border-x border-b border-slate-200 transition-all duration-300 cursor-pointer select-none">
+        
         <div>
-          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-xl mb-4">
+          <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center font-bold text-xl mb-4">
             📚
           </div>
           <h3 class="text-lg font-bold text-slate-800 mb-2">Biblioteca Digital</h3>
-          <p class="text-slate-600 text-sm leading-relaxed mb-4">
-            Recopilación de obras, trazados y literatura esencial. Accede y descarga documentos PDF en la nube para el estudio e instrucción.
+          <p class="text-slate-600 text-xs leading-relaxed mb-4">
+            Recopilación de obras y literatura esencial. Accede y descarga documentos PDF en la nube para el estudio e instrucción.
           </p>
         </div>
-        <div class="text-xs font-bold text-amber-600 flex items-center gap-1 pt-2 border-t border-slate-100">
-          <span x-text="categoriaPasosPerdidos === 'biblioteca' ? '✓ Viendo sección' : 'Ver Libros / PDF →'"></span>
+
+        <div class="text-xs font-bold text-purple-600 flex items-center justify-between pt-3 border-t border-slate-100">
+          <span x-text="categoriaPasosPerdidos === 'biblioteca' ? 'Cerrar sección' : 'Ver Libros / PDF'"></span>
+          <span class="text-sm transition-transform duration-200" :class="categoriaPasosPerdidos === 'biblioteca' ? 'rotate-180' : ''">▼</span>
         </div>
-      </div>
-    </div>
 
-    <!-- Módulo de Publicaciones Dinámicas Filtradas -->
-    <section class="bg-slate-50 p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <div class="flex items-center gap-2">
-            <h2 class="text-2xl font-bold text-slate-800" x-text="
-              categoriaPasosPerdidos === 'principios' ? 'Principios Fundamentales' :
-              categoriaPasosPerdidos === 'docencia' ? 'Docencia y Tradición' :
-              categoriaPasosPerdidos === 'accion' ? 'Acción Exterior' :
-              categoriaPasosPerdidos === 'biblioteca' ? 'Biblioteca Digital' :
-              'Divulgación y Planchas Públicas'
-            "></h2>
-            <template x-if="categoriaPasosPerdidos !== 'todos'">
-              <button @click="categoriaPasosPerdidos = 'todos'" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded font-bold transition-colors">
-                Mostrar Todo
-              </button>
-            </template>
-          </div>
-          <p class="text-sm text-slate-500">
-            <span x-show="categoriaPasosPerdidos === 'todos'">Trazados y publicaciones abiertas al mundo profano</span>
-            <span x-show="categoriaPasosPerdidos === 'principios'">Artículos sobre fraternidad, tolerancia y valores masónicos</span>
-            <span x-show="categoriaPasosPerdidos === 'docencia'">Ensayos e instrucción sobre filosofía e historia</span>
-            <span x-show="categoriaPasosPerdidos === 'accion'">Publicaciones de actividades y eventos filantrópicos</span>
-            <span x-show="categoriaPasosPerdidos === 'biblioteca'">Obras y documentos PDF disponibles en la nube</span>
-          </p>
-        </div>
-        <template x-if="tienePermisoEdicionPasosPerdidos()">
-          <button @click="abrirModalNuevaTarjeta()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 shadow self-start md:self-auto">
-            <span>+</span> Publicar Contenido
-          </button>
-        </template>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-6">
-        <template x-for="tarjeta in tarjetasFiltradasPasosPerdidos" :key="tarjeta.id">
-          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative flex flex-col justify-between">
-            <div>
-              <div class="flex justify-between items-center mb-2">
-                <span :class="{
-                  'bg-amber-100 text-amber-800': tarjeta.categoria === 'principios' || !tarjeta.categoria,
-                  'bg-blue-100 text-blue-800': tarjeta.categoria === 'docencia',
-                  'bg-emerald-100 text-emerald-800': tarjeta.categoria === 'accion',
-                  'bg-purple-100 text-purple-800': tarjeta.categoria === 'biblioteca'
-                }" class="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded" x-text="
-                  tarjeta.categoria === 'principios' ? 'Principios' :
-                  tarjeta.categoria === 'docencia' ? 'Docencia' :
-                  tarjeta.categoria === 'accion' ? 'Acción Exterior' :
-                  tarjeta.categoria === 'biblioteca' ? 'Biblioteca PDF' : 'General'
-                "></span>
-              </div>
-              <h4 class="text-lg font-bold text-slate-800 mb-2" x-text="tarjeta.titulo"></h4>
-              <p class="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-3" x-text="tarjeta.contenido"></p>
-            </div>
-
-            <div>
-              <template x-if="tarjeta.urlPdf">
-                <div class="mb-4">
-                  <a :href="tarjeta.urlPdf" target="_blank" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs px-3 py-2 rounded-lg font-bold transition-colors shadow">
-                    <span>📄</span> Abrir / Descargar Documento PDF
+        <!-- Desplegable del Acordeón -->
+        <div x-show="categoriaPasosPerdidos === 'biblioteca'" x-collapse class="mt-4 pt-4 border-t border-purple-200/60 space-y-3 cursor-default" @click.stop>
+          <template x-for="tarjeta in tarjetasDinamicas.filter(t => t.categoria === 'biblioteca')" :key="tarjeta.id">
+            <div class="p-3.5 bg-white rounded-xl border border-purple-100 shadow-sm relative flex flex-col justify-between">
+              <div>
+                <h4 class="font-bold text-sm text-slate-800 mb-1" x-text="tarjeta.titulo"></h4>
+                <p class="text-xs text-slate-600 leading-relaxed mb-2" x-text="tarjeta.contenido"></p>
+                <template x-if="tarjeta.urlPdf">
+                  <a :href="tarjeta.urlPdf" target="_blank" class="inline-flex items-center gap-1.5 text-purple-700 font-bold text-xs hover:underline mb-2">
+                    📄 Descargar PDF →
                   </a>
-                </div>
-              </template>
-
-              <div class="flex justify-between items-center text-xs text-slate-400 border-t pt-3 border-slate-100">
-                <span x-text="tarjeta.autor"></span>
+                </template>
+              </div>
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
                 <span x-text="tarjeta.fecha"></span>
+                <template x-if="tienePermisoEdicionPasosPerdidos()">
+                  <button @click.stop="eliminarTarjeta(tarjeta.id)" class="text-red-500 font-bold hover:underline">Eliminar</button>
+                </template>
               </div>
             </div>
-
-            <template x-if="tienePermisoEdicionPasosPerdidos()">
-              <div class="absolute top-4 right-4 flex gap-2">
-                <button @click="eliminarTarjeta(tarjeta.id)" title="Eliminar Publicación" class="text-red-500 hover:text-red-700 text-xs font-bold bg-red-50 p-1 rounded">
-                  ✕
-                </button>
-              </div>
-            </template>
-          </div>
-        </template>
-        <template x-if="tarjetasFiltradasPasosPerdidos.length === 0">
-          <div class="col-span-2 text-center py-8 text-slate-400 italic text-sm bg-white rounded-xl border border-dashed border-slate-300">
-            No hay publicaciones grabadas aún en esta categoría.
-          </div>
-        </template>
+          </template>
+          <template x-if="tarjetasDinamicas.filter(t => t.categoria === 'biblioteca').length === 0">
+            <p class="text-xs text-slate-400 italic text-center py-2">Sin libros registrados aún.</p>
+          </template>
+        </div>
       </div>
-    </section>
+
+    </div>
   `,
 
   // 2. TOCAR PUERTA

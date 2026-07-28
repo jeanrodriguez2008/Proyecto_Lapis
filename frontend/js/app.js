@@ -4,7 +4,7 @@ document.addEventListener('alpine:init', () => {
     // Estado de Navegación y Sesión
     vistaActual: 'pasos_perdidos',
     seccionUmbral: 'trazados',
-    categoriaPasosPerdidos: 'todos',
+    categoriaPasosPerdidos: null, // Control de acordeón desplegable en tarjetas
     modoRecuperar: false,
     usuarioLogueado: null,
     contadorVisitas: 0,
@@ -110,7 +110,7 @@ document.addEventListener('alpine:init', () => {
         id: 102,
         titulo: 'La Marcha y la Regla de Cinco Pasos',
         grado: '2º - Compañero',
-        resumen: 'Estudio de la geometría aplicada y el paso del Compañero.',
+        resumen: 'Estudio de la geometría applied y el paso del Compañero.',
         contenido: 'Contenido profundo sobre la marcha del segundo grado...',
         autor: 'Segundo Vigilante',
         fecha: '2026-07-15'
@@ -256,6 +256,10 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    toggleCategoriaAcordeon(cat) {
+      this.categoriaPasosPerdidos = (this.categoriaPasosPerdidos === cat) ? null : cat;
+    },
+
     async cargarBalotajesBackend() {
       if (!window.apiConnection) return;
       try {
@@ -286,7 +290,7 @@ document.addEventListener('alpine:init', () => {
       const esMaestroOAlto = rol === 'webmaster' || rol === 'venerable_maestro' || rol === 'maestro' || grado.includes('Maestro') || grado === 'Webmaster';
       const esCompanero = rol === 'companero' || grado.includes('Compañero');
 
-      if (sala === 'aprendiz') return true; // Todos los perfiles registrados ingresan a Aprendiz
+      if (sala === 'aprendiz') return true;
       if (sala === 'companero') return esCompanero || esMaestroOAlto;
       if (sala === 'maestro') return esMaestroOAlto;
       return false;
@@ -331,13 +335,6 @@ document.addEventListener('alpine:init', () => {
       if (!this.usuarioLogueado) return false;
       const rol = this.usuarioLogueado.rol;
       return rol === 'webmaster' || rol === 'venerable_maestro';
-    },
-
-    get tarjetasFiltradasPasosPerdidos() {
-      if (this.categoriaPasosPerdidos === 'todos') {
-        return this.tarjetasDinamicas;
-      }
-      return this.tarjetasDinamicas.filter(t => t.categoria === this.categoriaPasosPerdidos);
     },
 
     get trazadosFiltrados() {
@@ -446,7 +443,6 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    // Generar Código Único para Aspirante desde Contacto
     async generarCodigoParaAspirante(solicitud) {
       let codigo = '';
       if (window.apiConnection) {
@@ -474,7 +470,6 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    // Modal para Nueva Tarjeta en Pasos Perdidos
     async abrirModalNuevaTarjeta() {
       if (!this.tienePermisoEdicionPasosPerdidos()) {
         Swal.fire({
@@ -562,6 +557,9 @@ document.addEventListener('alpine:init', () => {
           };
           this.tarjetasDinamicas.unshift(nuevaTarjeta);
         }
+
+        // Abre automáticamente la categoría donde se acaba de publicar
+        this.categoriaPasosPerdidos = categoria;
 
         Swal.fire({
           icon: 'success',
