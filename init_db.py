@@ -7,40 +7,54 @@ def encriptar_password(password: str) -> str:
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 def inicializar_base_datos():
-    # 1. Crear las tablas si no existen
+    # 1. Crear las tablas automáticamente si no existen
     models.Base.metadata.create_all(bind=engine)
     
     db = SessionLocal()
     try:
-        # 2. Verificar si ya existe el usuario Trono
-        usuario_trono = db.query(models.Usuario).filter(models.Usuario.usuario == "trono").first()
-        
+        # 2. Configurar Webmaster (Trono Supremo)
+        usuario_trono = db.query(models.Usuario).filter(models.Usuario.usuario == "webmaster").first()
         if not usuario_trono:
-            print("🏛️ Creando usuario semilla único (Trono / Webmaster)...")
+            print("🏛️ Creando usuario Webmaster...")
             nuevo_trono = models.Usuario(
-                usuario="trono",
-                password_hash=encriptar_password("webmaster"), # Clave exacta requerida
-                nombre_real="Webmaster / Trono",
-                rol="trono"
+                usuario="webmaster",
+                password_hash=encriptar_password("admin12345"),
+                nombre_real="Jean Carlos Rodriguez (Webmaster)",
+                rol="webmaster"
             )
             db.add(nuevo_trono)
-            
-            # Código de pase inicial de seguridad
+        else:
+            usuario_trono.password_hash = encriptar_password("admin12345")
+            print("ℹ️ Usuario 'webmaster' verificado.")
+
+        # 3. Configurar Venerable Maestro
+        usuario_venerable = db.query(models.Usuario).filter(models.Usuario.usuario == "venerable").first()
+        if not usuario_venerable:
+            print("📜 Creando usuario Venerable Maestro...")
+            nuevo_venerable = models.Usuario(
+                usuario="venerable",
+                password_hash=encriptar_password("lapis123"),
+                nombre_real="Venerable Maestro",
+                rol="venerable_maestro"
+            )
+            db.add(nuevo_venerable)
+        else:
+            usuario_venerable.password_hash = encriptar_password("lapis123")
+            print("ℹ️ Usuario 'venerable' verificado.")
+
+        # 4. Generar código de pase inicial si no existe
+        pase_existente = db.query(models.CodigoPase).filter(models.CodigoPase.codigo == "PASE2026").first()
+        if not pase_existente:
+            print("🔑 Generando código de pase inicial: PASE2026")
             pase_inicial = models.CodigoPase(
                 codigo="PASE2026",
-                creado_por="trono",
+                creado_por="webmaster",
                 usado=False
             )
             db.add(pase_inicial)
-            
-            db.commit()
-            print("✅ Usuario 'trono' configurado correctamente (clave: webmaster).")
-            print("🔑 Código de pase generado: PASE2026")
-        else:
-            # Si ya existía, actualizamos su clave a 'webmaster' por seguridad
-            usuario_trono.password_hash = encriptar_password("webmaster")
-            db.commit()
-            print("ℹ️ Usuario 'trono' actualizado con la contraseña 'webmaster'.")
+        
+        db.commit()
+        print("✅ Inicialización de perfiles maestros completada con éxito.")
             
     except Exception as e:
         db.rollback()

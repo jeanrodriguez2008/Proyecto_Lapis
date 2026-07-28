@@ -1,7 +1,7 @@
 import os
+import hashlib
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde el archivo .env si existe
@@ -24,7 +24,7 @@ if DATABASE_URL.startswith("sqlite"):
 engine = create_engine(
     DATABASE_URL,
     connect_args=connect_args,
-    pool_pre_ping=True # Mantiene activa la conexión en Neon Tech evitando desconexiones por inactividad
+    pool_pre_ping=True  # Mantiene activa la conexión en Neon Tech evitando desconexiones por inactividad
 )
 
 # Sesión local para interactuar con la base de datos
@@ -38,5 +38,54 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    finally:
+        db.close()
+
+# ==========================================
+# 🚀 INICIALIZACIÓN Y SEMBRADO DE BASE DE DATOS
+# ==========================================
+
+def init_db():
+    """
+    Crea automáticamente las tablas si no existen e inserta 
+    los usuarios principales por defecto (Webmaster y Venerable Maestro).
+    """
+    import models  # Importación tardía para evitar importaciones circulares
+
+    # Crear todas las tablas en la base de datos configurada
+    Base.metadata.create_all(bind=engine)
+
+    db = SessionLocal()
+    try:
+        # 1. Verificar y sembrar al Webmaster (Trono Supremo / Administrador)
+        webmaster_user = db.query(models.Usuario).filter(models.Usuario.usuario == "webmaster").first()
+        if not webmaster_user:
+            pass_webmaster = hashlib.sha256("admin12345".encode("utf-8")).hexdigest()
+            admin_default = models.Usuario(
+                usuario="webmaster",
+                password_hash=pass_webmaster,
+                nombre_real="Jean Carlos Rodriguez (Webmaster)",
+                rol="webmaster",
+                grado="maestro"
+            )
+            db.add(admin_default)
+
+        # 2. Verificar y sembrar al Venerable Maestro
+        venerable_user = db.query(models.Usuario).filter(models.Usuario.usuario == "venerable").first()
+        if not venerable_user:
+            pass_venerable = hashlib.sha256("lapis123".encode("utf-8")).hexdigest()
+            venerable_default = models.Usuario(
+                usuario="venerable",
+                password_hash=pass_venerable,
+                nombre_real="Venerable Maestro",
+                rol="venerable_maestro",
+                grado="maestro"
+            )
+            db.add(venerable_default)
+
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[ERROR DB] Error durante la inicialización de la base de datos: {e}")
     finally:
         db.close()

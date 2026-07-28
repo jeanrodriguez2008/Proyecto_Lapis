@@ -7,10 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 import models
 import schemas
-from database import get_db, engine
+from database import get_db, engine, init_db
+
+# Inicializar tablas y sembrar usuarios administradores por defecto
+init_db()
 
 # ==========================================
 # 🚀 INICIALIZACIÓN DE LA APLICACIÓN
@@ -18,8 +22,8 @@ from database import get_db, engine
 
 app = FastAPI(
     title="Proyecto Lapis - API del Templo",
-    description="Sistema de Gestión de Roles, Trazados y Censo",
-    version="1.0.0"
+    description="Sistema de Gestión de Roles, Trazados y Censo con soporte Webmaster",
+    version="1.1.0"
 )
 
 # Configuración de CORS
@@ -34,6 +38,9 @@ app.add_middleware(
 # Crear tablas automáticamente en la base de datos si no existen
 models.Base.metadata.create_all(bind=engine)
 
+# Constante de Roles de Administrador (Trono / Venerable Maestro / Webmaster)
+ROLES_ADMINISTRATIVOS = ["webmaster", "trono", "venerable_maestro", "admin"]
+
 
 # ==========================================
 # 📁 ARCHIVOS ESTÁTICOS Y RUTA PRINCIPAL
@@ -42,11 +49,9 @@ models.Base.metadata.create_all(bind=engine)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
-# Montar carpeta frontend si existe
 if os.path.exists(FRONTEND_DIR):
     app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
 
-# Ruta principal que sirve index.html desde la carpeta frontend
 @app.get("/")
 def read_root():
     index_path = os.path.join(FRONTEND_DIR, "index.html")
@@ -60,17 +65,16 @@ def read_root():
 # ==========================================
 
 def encriptar_password(password: str) -> str:
-    """Hashea la contraseña en SHA-256 para igualar el comportamiento de init_db."""
+    """Hashea la contraseña en SHA-256."""
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
-
 
 def obtener_usuario_actual(
     db: Session = Depends(get_db), 
     authorization: str = Header(None, alias="Authorization")
 ) -> models.Usuario:
     """
-    Dependencia de seguridad. 
-    Usa autenticación basada en Token Simple (el nombre de usuario enviado en el header).
+    Dependencia de seguridad.
+    Valida el token enviado en la cabecera de autorización.
     """
     if not authorization:
         raise HTTPException(
@@ -137,26 +141,28 @@ def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
     return {
         "token": user.usuario,
         "usuario": {
+            "id": user.id,
             "usuario": user.usuario,
             "nombre": user.nombre_real,
+            "grado": getattr(user, "grado", "maestro"),
             "rol": user.rol
         }
     }
 
 
 # ==========================================
-# 🎫 ENDPOINTS DE CÓDIGOS DE PASE
+# 🎫 ENDPOINTS DE CÓDIGOS DE PASE (TRONO / WEBMASTER)
 # ==========================================
 
 @app.post("/api/codigos/generar", response_model=schemas.CodigoPaseResponse)
 def generar_codigo_pase(db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
-    if autor.rol not in ["trono", "venerable_maestro"]:
+    if autor.rol not in ROLES_ADMINISTRATIVOS:
         raise HTTPException(
             status_code=403, 
-            detail="Solo el Trono o el Venerable Maestro pueden consagrar palabras de pase."
+            detail="Solo el Webmaster, Trono o Venerable Maestro pueden consagrar palabras de pase."
         )
     
-    nuevo_codigo = str(uuid.uuid4())[:8].upper()
+    nuevo_codigo = f"TRONO149-{str(uuid.uuid4())[:5].upper()}"
     
     pase = models.CodigoPase(
         codigo=nuevo_codigo,
@@ -170,7 +176,7 @@ def generar_codigo_pase(db: Session = Depends(get_db), autor: models.Usuario = D
 
 @app.get("/api/codigos/listar", response_model=List[schemas.CodigoPaseResponse])
 def listar_codigos_pase(db: Session = Depends(get_db), autor: models.Usuario = Depends(obtener_usuario_actual)):
-    if autor.rol not in ["trono", "venerable_maestro"]:
+    if autor.rol not in ROLES_ADMINISTRATIVOS:
         raise HTTPException(status_code=403, detail="Acceso denegado a la cámara de pases.")
     
     return db.query(models.CodigoPase).order_by(models.CodigoPase.fecha_creacion.desc()).all()
@@ -202,28 +208,13 @@ def registrar_en_censo(req: schemas.CensoCreate, db: Session = Depends(get_db)):
     db.add(nueva_planilla)
     db.commit()
     db.refresh(nueva_planilla)
-    return {
-        "id": nueva_planilla.id,
-        "nombre": nueva_planilla.nombre,
-        "cedula": nueva_planilla.cedula,
-        "correo": nueva_planilla.correo,
-        "telefono": nueva_planilla.telefono,
-        "grado": nueva_planilla.grado,
-        "profesion": nueva_planilla.profesion,
-        "nacimiento": nueva_planilla.nacimiento,
-        "direccion": nueva_planilla.direccion,
-        "pregunta_mascota": nueva_planilla.pregunta_mascota,
-        "pregunta_pelicula": nueva_planilla.pregunta_pelicula,
-        "pregunta_deporte": nueva_planilla.pregunta_deporte,
-        "estado": nueva_planilla.estado,
-        "fecha_creacion": nueva_planilla.fecha_creacion,
-        "message": "Planilla consignada con éxito a los archivos de la Logia."
-    }
+    return nueva_planilla
 
 
 @app.get("/api/censo/listar", response_model=List[schemas.CensoResponse])
 def ver_planillas_censo(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    if usuario.rol not in ["trono", "venerable_maestro", "primer_vigilante", "segundo_vigilante"]:
+    roles_permitidos = ROLES_ADMINISTRATIVOS + ["primer_vigilante", "segundo_vigilante"]
+    if usuario.rol not in roles_permitidos:
         raise HTTPException(status_code=403, detail="No posees el rango para auditar el Censo.")
     
     return db.query(models.Censo).order_by(models.Censo.fecha_creacion.desc()).all()
@@ -236,7 +227,8 @@ def dictaminar_planilla(
     db: Session = Depends(get_db), 
     usuario: models.Usuario = Depends(obtener_usuario_actual)
 ):
-    if usuario.rol not in ["trono", "venerable_maestro", "primer_vigilante", "segundo_vigilante"]:
+    roles_permitidos = ROLES_ADMINISTRATIVOS + ["primer_vigilante", "segundo_vigilante"]
+    if usuario.rol not in roles_permitidos:
         raise HTTPException(status_code=403, detail="No posees autoridad para dictaminar el censo.")
     
     planilla = db.query(models.Censo).filter(models.Censo.id == planilla_id).first()
@@ -252,7 +244,7 @@ def dictaminar_planilla(
 
 
 # ==========================================
-# 📜 ENDPOINTS DE TRAZADOS
+# 📜 ENDPOINTS DE TRAZADOS Y DIVULGACIÓN
 # ==========================================
 
 @app.post("/api/trazados", response_model=schemas.TrazadoResponse)
@@ -277,18 +269,20 @@ def crear_trazado(req: schemas.TrazadoCreate, db: Session = Depends(get_db), aut
 def ver_trazados(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
     query = db.query(models.Trazado)
     
-    if usuario.rol == "aprendiz":
-        query = query.filter(models.Trazado.camara_destino == "aprendiz")
+    if usuario.rol in ROLES_ADMINISTRATIVOS or usuario.rol == "maestro":
+        pass  # Maestros y Webmaster ven todos los trazados
     elif usuario.rol == "companero":
         query = query.filter(models.Trazado.camara_destino.in_(["aprendiz", "companero"]))
+    else:
+        query = query.filter(models.Trazado.camara_destino == "aprendiz")
     
     return query.order_by(models.Trazado.fecha_publicacion.desc()).all()
 
 
 @app.delete("/api/trazados/{trazado_id}")
 def borrar_trazado(trazado_id: int, db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    if usuario.rol not in ["trono", "venerable_maestro"]:
-        raise HTTPException(status_code=403, detail="Solo el Trono o el Venerable Maestro pueden borrar trazados.")
+    if usuario.rol not in ROLES_ADMINISTRATIVOS:
+        raise HTTPException(status_code=403, detail="Solo la Dignidad del Trono o el Webmaster pueden borrar trazados.")
     
     trazado = db.query(models.Trazado).filter(models.Trazado.id == trazado_id).first()
     if not trazado:
@@ -296,7 +290,7 @@ def borrar_trazado(trazado_id: int, db: Session = Depends(get_db), usuario: mode
     
     db.delete(trazado)
     db.commit()
-    return {"mensaje": "Trazado eliminado correctamente por la autoridad."}
+    return {"mensaje": "Trazado eliminado correctamente."}
 
 
 # ==========================================
@@ -305,9 +299,9 @@ def borrar_trazado(trazado_id: int, db: Session = Depends(get_db), usuario: mode
 
 @app.post("/api/chat", response_model=schemas.ChatMensajeResponse)
 def enviar_mensaje_chat(req: schemas.ChatMensajeCreate, db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    roles_permitidos = ["trono", "venerable_maestro", "primer_vigilante", "segundo_vigilante", "maestro"]
+    roles_permitidos = ROLES_ADMINISTRATIVOS + ["primer_vigilante", "segundo_vigilante", "maestro"]
     if usuario.rol not in roles_permitidos:
-        raise HTTPException(status_code=403, detail="Solo los Maestros Masones pueden hablar en el chat.")
+        raise HTTPException(status_code=403, detail="Solo los Maestros Masones y el Webmaster pueden hablar en el chat.")
     
     nuevo_mensaje = models.ChatMensaje(
         usuario_nombre=usuario.nombre_real,
@@ -322,8 +316,41 @@ def enviar_mensaje_chat(req: schemas.ChatMensajeCreate, db: Session = Depends(ge
 
 @app.get("/api/chat", response_model=List[schemas.ChatMensajeResponse])
 def ver_mensajes_chat(db: Session = Depends(get_db), usuario: models.Usuario = Depends(obtener_usuario_actual)):
-    roles_permitidos = ["trono", "venerable_maestro", "primer_vigilante", "segundo_vigilante", "maestro"]
+    roles_permitidos = ROLES_ADMINISTRATIVOS + ["primer_vigilante", "segundo_vigilante", "maestro"]
     if usuario.rol not in roles_permitidos:
         raise HTTPException(status_code=403, detail="El chat de la Cámara del Medio está oculto a tus ojos.")
     
     return db.query(models.ChatMensaje).order_by(models.ChatMensaje.fecha_envio.desc()).limit(50).all()
+
+
+# ==========================================
+# 👑 ENDPOINTS DE GESTIÓN DE CUADRO LOGIAL (WEBMASTER / TRONO)
+# ==========================================
+
+class ActualizarRolRequest(BaseModel):
+    grado: str
+    rol: str
+
+@app.patch("/api/usuarios/{usuario_id}/rol")
+def actualizar_rol_hermano(
+    usuario_id: int,
+    req: ActualizarRolRequest,
+    db: Session = Depends(get_db),
+    admin: models.Usuario = Depends(obtener_usuario_actual)
+):
+    if admin.rol not in ROLES_ADMINISTRATIVOS:
+        raise HTTPException(
+            status_code=403, 
+            detail="Solo el Webmaster o Dignidades pueden modificar grados o roles."
+        )
+    
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    
+    usuario.rol = req.rol
+    if hasattr(usuario, "grado"):
+        usuario.grado = req.grado
+        
+    db.commit()
+    return {"mensaje": f"Rol de {usuario.nombre_real} actualizado a {req.rol} ({req.grado})."}
