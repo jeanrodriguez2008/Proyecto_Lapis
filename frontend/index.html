@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proyecto Lapis - Resp:. Logia Dignidad Humana N° 149</title>
+  <title>Proyecto Lapis - Resp:. Logia:. Sob:. Dignidad Humana N° 149</title>
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SweetAlert2 CSS y JS -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Alpine.js Core -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -16,18 +18,16 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         
-        <!-- Logo Principal -->
+        <!-- Logo Principal de la Logia -->
         <div class="flex items-center gap-3 cursor-pointer" @click="vistaActual = 'pasos_perdidos'">
-          <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center text-slate-900 font-bold text-xl shadow-md">
-            L
-          </div>
+          <img src="logo.png" alt="Logo Logia Dignidad Humana N° 149" class="h-10 w-auto object-contain rounded">
           <div>
             <span class="font-extrabold text-amber-400 text-lg tracking-wide block leading-none">PROYECTO LAPIS</span>
-            <span class="text-[10px] text-slate-400 uppercase tracking-widest block">Dignidad Humana N° 149</span>
+            <span class="text-[10px] text-slate-400 uppercase tracking-widest block">R.:L.:S.: Dignidad Humana N° 149</span>
           </div>
         </div>
 
-        <!-- Botones Siempre Visibles (Pasos Perdidos, Tocar Puerta, Palabra de Pase, Umbral) -->
+        <!-- Botones de Navegación -->
         <nav class="hidden md:flex items-center space-x-2">
           <button @click="vistaActual = 'pasos_perdidos'" 
                   :class="vistaActual === 'pasos_perdidos' ? 'bg-amber-500/20 text-amber-400 border-amber-500' : 'text-slate-300 hover:bg-slate-800 hover:text-white border-transparent'"
@@ -53,12 +53,13 @@
             Umbral
           </button>
 
-          <!-- Opción adicional exclusiva del Perfil del Trono / Venerable Maestro -->
-          <template x-if="usuarioLogueado && (usuarioLogueado.rol === 'admin' || usuarioLogueado.rol === 'venerable_maestro')">
+          <!-- Opción adicional exclusiva del Perfil del Trono / Venerable Maestro / Webmaster -->
+          <template x-if="tienePermisoPerfilTrono()">
             <button @click="vistaActual = 'admin'" 
                     :class="vistaActual === 'admin' ? 'bg-amber-500/20 text-amber-400 border-amber-500' : 'text-slate-300 hover:bg-slate-800 hover:text-white border-transparent'"
-                    class="px-3 py-2 rounded-md text-sm font-medium transition-colors border-b-2">
-              Perfil del Trono
+                    class="px-3 py-2 rounded-md text-sm font-medium transition-colors border-b-2 flex items-center gap-1.5">
+              <span>👑</span>
+              <span>Perfil del Trono</span>
             </button>
           </template>
         </nav>
@@ -69,7 +70,7 @@
             <div class="flex items-center gap-3">
               <div class="text-right hidden sm:block">
                 <span class="text-xs text-amber-400 font-bold block leading-none" x-text="usuarioLogueado.nombre"></span>
-                <span class="text-[10px] text-slate-400 uppercase tracking-wider" x-text="usuarioLogueado.grado"></span>
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider block" x-text="usuarioLogueado.rol.replace('_', ' ')"></span>
               </div>
               <button @click="cerrarSesion()" class="text-xs bg-red-900/50 hover:bg-red-800 text-red-200 px-3 py-1.5 rounded border border-red-500/30 transition-colors">
                 Salir
@@ -90,7 +91,7 @@
   <!-- Pie de Página Institucional -->
   <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs mt-auto">
     <div class="max-w-7xl mx-auto px-4">
-      <p>© 2026 Resp:. Logia Dignidad Humana N° 149. Todos los derechos reservados.</p>
+      <p>© 2026 Resp:. Logia:. Sob:. Dignidad Humana N° 149. Todos los derechos reservados.</p>
       <p class="mt-1 text-slate-500">A:. G:. D:. G:. A:. D:. U:.</p>
     </div>
   </footer>
