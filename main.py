@@ -43,24 +43,6 @@ ROLES_ADMINISTRATIVOS = ["webmaster", "trono", "venerable_maestro", "admin"]
 
 
 # ==========================================
-# 📁 ARCHIVOS ESTÁTICOS Y RUTA PRINCIPAL
-# ==========================================
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
-
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
-
-@app.get("/")
-def read_root():
-    index_path = os.path.join(FRONTEND_DIR, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"error": "No se encontró index.html dentro de la carpeta frontend"}
-
-
-# ==========================================
 # 🔐 FUNCIONES DE SEGURIDAD Y AUTENTICACIÓN
 # ==========================================
 
@@ -354,3 +336,14 @@ def actualizar_rol_hermano(
         
     db.commit()
     return {"mensaje": f"Rol de {usuario.nombre_real} actualizado a {req.rol} ({req.grado})."}
+
+
+# ==========================================
+# 📁 MONTAR ARCHIVOS ESTÁTICOS (AL FINAL DE MAIN.PY)
+# ==========================================
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
