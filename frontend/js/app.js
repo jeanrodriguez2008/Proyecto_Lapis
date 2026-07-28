@@ -104,24 +104,15 @@ document.addEventListener('alpine:init', () => {
 
     async init() {
       // Registrar e incrementar el contador global en FastAPI
-      if (window.apiConnection) {
-        try {
-          const res = await window.apiConnection.get('/pasos-perdidos/visitas');
-          if (res && res.visitas !== undefined) {
-            this.contadorVisitas = res.visitas;
-            localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
-          }
-        } catch (e) {
-          console.warn('Servidor offline, utilizando contador local.');
-          let visitasLocales = localStorage.getItem('lapis_contador_visitas');
-          this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) + 1 : 1;
-          localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
+      await this.sincronizarVisitas();
+
+      // Sincronización automática periódica (Polling) cada 10 segundos
+      setInterval(async () => {
+        await this.sincronizarVisitas();
+        if (this.usuarioLogueado) {
+          await this.cargarBalotajesBackend();
         }
-      } else {
-        let visitasLocales = localStorage.getItem('lapis_contador_visitas');
-        this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) + 1 : 1;
-        localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
-      }
+      }, 10000);
 
       const sesionGuardada = localStorage.getItem('lapis_sesion');
       if (sesionGuardada) {
@@ -146,14 +137,33 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // Carga robusta con soporte de LocalStorage + API Backend
+    async sincronizarVisitas() {
+      if (window.apiConnection) {
+        try {
+          // Uso de ?t=Date.now() para desactivar el caché móvil de Safari y Chrome
+          const res = await window.apiConnection.get('/pasos-perdidos/visitas?t=' + Date.now());
+          if (res && res.visitas !== undefined) {
+            this.contadorVisitas = res.visitas;
+            localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
+          }
+        } catch (e) {
+          console.warn('Servidor offline, utilizando contador local.');
+          let visitasLocales = localStorage.getItem('lapis_contador_visitas');
+          this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) : 1;
+        }
+      } else {
+        let visitasLocales = localStorage.getItem('lapis_contador_visitas');
+        this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) : 1;
+      }
+    },
+
+    // Carga robusta desde la API Backend
     async cargarPasosPerdidos() {
       let publicaciones = [];
       
-      // 1. Intentar descargar desde la API
       if (window.apiConnection) {
         try {
-          const remotePasos = await window.apiConnection.get('/pasos-perdidos');
+          const remotePasos = await window.apiConnection.get('/pasos-perdidos?t=' + Date.now());
           if (remotePasos && Array.isArray(remotePasos)) {
             publicaciones = remotePasos.map(p => ({
               id: p.id,
@@ -166,11 +176,10 @@ document.addEventListener('alpine:init', () => {
             }));
           }
         } catch (e) {
-          console.warn('Backend API no disponible. Utilizando almacenamiento local de Pasos Perdidos.');
+          console.warn('Backend API no disponible para Pasos Perdidos.');
         }
       }
 
-      // 2. Combinar con elementos guardados en LocalStorage (Backup local)
       const localesGuardados = localStorage.getItem('lapis_pasos_locales');
       let publicacionesLocales = [];
       if (localesGuardados) {
@@ -181,13 +190,11 @@ document.addEventListener('alpine:init', () => {
         }
       }
 
-      // Fusionar evitando duplicados por ID
       const idsServidor = new Set(publicaciones.map(p => p.id));
       const localesNoDuplicadas = publicacionesLocales.filter(p => !idsServidor.has(p.id));
       
       this.tarjetasDinamicas = [...publicaciones, ...localesNoDuplicadas];
 
-      // 3. Si no hay nada, mostrar la tarjeta por defecto
       if (this.tarjetasDinamicas.length === 0) {
         this.tarjetasDinamicas = [
           {
@@ -272,7 +279,6 @@ document.addEventListener('alpine:init', () => {
 
         let guardadoEnBackend = false;
 
-        // Intentar guardar en FastAPI
         if (window.apiConnection) {
           try {
             const res = await window.apiConnection.post('/pasos-perdidos', {
@@ -288,7 +294,6 @@ document.addEventListener('alpine:init', () => {
           }
         }
 
-        // Guardar siempre en estado de Alpine y en LocalStorage
         this.tarjetasDinamicas.unshift(nuevaTarjeta);
         this.guardarPublicacionEnLocalStorage(nuevaTarjeta);
         this.categoriaPasosPerdidos = categoria;
@@ -338,7 +343,6 @@ document.addEventListener('alpine:init', () => {
         
         this.tarjetasDinamicas = this.tarjetasDinamicas.filter(t => t.id !== id);
         
-        // Limpiar también de LocalStorage
         const locales = localStorage.getItem('lapis_pasos_locales');
         if (locales) {
           try {
@@ -360,7 +364,7 @@ document.addEventListener('alpine:init', () => {
     async cargarTrazados() {
       if (window.apiConnection) {
         try {
-          const remoteTrazados = await window.apiConnection.get('/trazados');
+          const remoteTrazados = await window.apiConnection.get('/trazados?t=' + Date.now());
           if (remoteTrazados && Array.isArray(remoteTrazados)) {
             this.trazados = remoteTrazados.map(t => ({
               id: t.id,
@@ -413,7 +417,7 @@ document.addEventListener('alpine:init', () => {
     async cargarBalotajesBackend() {
       if (!window.apiConnection) return;
       try {
-        const remoteBalotajes = await window.apiConnection.get('/balotajes');
+        const remoteBalotajes = await window.apiConnection.get('/balotajes?t=' + Date.now());
         if (remoteBalotajes && Array.isArray(remoteBalotajes)) {
           this.listaBalotajes = remoteBalotajes.map(b => ({
             id: b.id,
@@ -788,8 +792,7 @@ document.addEventListener('alpine:init', () => {
         if (window.apiConnection) {
           try {
             await window.apiConnection.post(`/balotajes/${id}/votar`, { voto: tipo, tipo_voto: tipo });
-            if (tipo === 'blanca') balotaje.blancas++;
-            if (tipo === 'negra') balotaje.negras++;
+            await this.cargarBalotajesBackend();
 
             Swal.fire({
               icon: 'success',

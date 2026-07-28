@@ -42,6 +42,12 @@ def init_db():
 
     db = SessionLocal()
     try:
+        # Inicializar ajuste global de visitas si no existe
+        visita_setting = db.query(models.AjustesGlobales).filter(models.AjustesGlobales.clave == "visitas").first()
+        if not visita_setting:
+            visita_setting = models.AjustesGlobales(clave="visitas", valor=0)
+            db.add(visita_setting)
+
         webmaster_user = db.query(models.Usuario).filter(models.Usuario.usuario == "webmaster").first()
         if not webmaster_user:
             print("🏛️ Creando usuario Webmaster...")

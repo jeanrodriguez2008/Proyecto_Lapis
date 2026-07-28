@@ -27,8 +27,6 @@ app = FastAPI(
 def startup_event():
     init_db()
 
-contador_visitas_global = 0
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -175,10 +173,17 @@ def eliminar_pasos_perdidos(tarjeta_id: int, db: Session = Depends(get_db), auto
 
 @app.get("/api/pasos-perdidos/visitas")
 @app.post("/api/pasos-perdidos/visitas")
-def registrar_y_obtener_visita():
-    global contador_visitas_global
-    contador_visitas_global += 1
-    return {"visitas": contador_visitas_global}
+def registrar_y_obtener_visita(db: Session = Depends(get_db)):
+    registro = db.query(models.AjustesGlobales).filter(models.AjustesGlobales.clave == "visitas").first()
+    if not registro:
+        registro = models.AjustesGlobales(clave="visitas", valor=1)
+        db.add(registro)
+    else:
+        registro.valor += 1
+    
+    db.commit()
+    db.refresh(registro)
+    return {"visitas": registro.valor}
 
 
 # ==========================================

@@ -6,6 +6,13 @@ def obtener_fecha_actual():
     return datetime.now(timezone.utc)
 
 
+class AjustesGlobales(Base):
+    __tablename__ = "ajustes_globales"
+
+    clave = Column(String, primary_key=True, index=True)
+    valor = Column(Integer, default=0, nullable=False)
+
+
 class Usuario(Base):
     __tablename__ = "usuarios"
 
