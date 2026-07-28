@@ -110,7 +110,7 @@ document.addEventListener('alpine:init', () => {
         id: 102,
         titulo: 'La Marcha y la Regla de Cinco Pasos',
         grado: '2º - Compañero',
-        resumen: 'Estudio de la geometría applied y el paso del Compañero.',
+        resumen: 'Estudio de la geometría aplicada y el paso del Compañero.',
         contenido: 'Contenido profundo sobre la marcha del segundo grado...',
         autor: 'Segundo Vigilante',
         fecha: '2026-07-15'

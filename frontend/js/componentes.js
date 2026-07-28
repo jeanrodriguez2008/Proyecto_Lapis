@@ -254,7 +254,7 @@ window.VistasProyectoLapis = {
       </div>
       <form @submit.prevent="consagrarCuenta()" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Palabra de Pase (Codigo generado por el Venerable Maestro)</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Palabra de Pase (Código generado por el Venerable Maestro)</label>
           <input type="text" x-model="formRegistro.codigoPase" placeholder="EJ: TRONO149-XYZ" required class="w-full border-slate-300 rounded-lg p-2.5 border uppercase tracking-widest text-center font-mono font-bold text-amber-700 bg-amber-50/50">
         </div>
         <div>
@@ -685,39 +685,52 @@ window.VistasProyectoLapis = {
           <table class="w-full text-left text-sm">
             <thead class="bg-slate-100 text-slate-600 font-semibold uppercase text-xs">
               <tr>
-                <th class="p-3">Hermano</th>
+                <th class="p-3">Nombre</th>
                 <th class="p-3">Grado Actual</th>
-                <th class="p-3">Rol</th>
-                <th class="p-3">Acciones</th>
+                <th class="p-3">Rol / Cargo</th>
+                <th class="p-3 text-center">Gestión de Grado</th>
+                <th class="p-3 text-center">Acciones Directas</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
               <template x-for="hermano in listaHermanos" :key="hermano.id">
-                <tr>
-                  <td class="p-3 font-medium text-slate-800" x-text="hermano.nombre"></td>
-                  <td class="p-3 font-bold text-amber-700" x-text="hermano.esFijo ? 'Webmaster' : hermano.grado"></td>
-                  <td class="p-3 text-slate-600 capitalize" x-text="hermano.rol.replace('_', ' ')"></td>
-                  <td class="p-3">
+                <tr :class="hermano.esFijo ? 'bg-amber-50/40' : ''">
+                  <td class="p-3 font-medium text-slate-800">
+                    <span x-text="hermano.nombre"></span>
+                    <template x-if="hermano.esFijo">
+                      <span class="ml-2 text-[10px] bg-slate-900 text-amber-400 px-2 py-0.5 rounded font-bold uppercase">Único</span>
+                    </template>
+                  </td>
+                  <td class="p-3 text-slate-600 font-semibold" x-text="hermano.grado"></td>
+                  <td class="p-3 text-slate-500 uppercase text-xs" x-text="hermano.rol.replace('_', ' ')"></td>
+                  <td class="p-3 text-center">
                     <template x-if="!hermano.esFijo && hermano.rol !== 'webmaster'">
-                      <div class="flex items-center gap-2">
-                        <button @click="aumentarRolHermano(hermano)" title="Promover" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-2.5 py-1 rounded text-xs font-bold transition-colors">
-                          ▲ Subir
+                      <div class="flex items-center justify-center gap-2">
+                        <button @click="disminuirRolHermano(hermano)" title="Disminuir Nivel" class="bg-slate-200 hover:bg-slate-300 text-slate-800 w-8 h-8 rounded-lg font-bold text-base transition-colors flex items-center justify-center">
+                          -
                         </button>
-                        <button @click="disminuirRolHermano(hermano)" title="Reducir" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-xs font-bold transition-colors">
-                          ▼ Bajar
-                        </button>
-                        <button @click="editarRolDirecto(hermano)" class="text-amber-600 hover:underline font-bold text-xs ml-1">
-                          Editar
-                        </button>
-                        <button @click="eliminarHermanoCuadro(hermano)" title="Eliminar del Cuadro" class="text-red-500 hover:text-red-700 font-bold text-xs ml-2">
-                          🗑️ Eliminar
+                        <button @click="aumentarRolHermano(hermano)" title="Aumentar Nivel" class="bg-amber-600 hover:bg-amber-700 text-white w-8 h-8 rounded-lg font-bold text-base transition-colors flex items-center justify-center">
+                          +
                         </button>
                       </div>
                     </template>
                     <template x-if="hermano.esFijo || hermano.rol === 'webmaster'">
-                      <span class="text-xs text-slate-400 font-semibold italic bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
-                        🔒 Perfil Único Fijo
-                      </span>
+                      <span class="text-xs text-slate-400 italic">Inmutable</span>
+                    </template>
+                  </td>
+                  <td class="p-3 text-center">
+                    <template x-if="!hermano.esFijo && hermano.rol !== 'webmaster'">
+                      <div class="flex items-center justify-center gap-2">
+                        <button @click="editarRolDirecto(hermano)" class="bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 border border-slate-300 px-2.5 py-1 rounded text-xs font-bold transition-colors">
+                          ✏️ Rol
+                        </button>
+                        <button @click="eliminarHermanoCuadro(hermano)" title="Retirar Hermano" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2.5 py-1 rounded text-xs font-bold transition-colors">
+                          🗑️ Retirar
+                        </button>
+                      </div>
+                    </template>
+                    <template x-if="hermano.esFijo || hermano.rol === 'webmaster'">
+                      <span class="text-xs text-slate-400 italic">Protegido</span>
                     </template>
                   </td>
                 </tr>
