@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
@@ -32,7 +32,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 def encriptar_password(password: str) -> str:
-    """Genera un hash seguro a partir de una contraseña plana."""
+    """Genera un hash seguro a partir de una contraseña plana usando bcrypt."""
     return pwd_context.hash(password)
 
 
@@ -44,10 +44,11 @@ def verificar_password(plain_password: str, hashed_password: str) -> bool:
 def crear_token_acceso(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Crea un token JWT con tiempo de expiración."""
     to_encode = data.copy()
+    now = datetime.now(timezone.utc)
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

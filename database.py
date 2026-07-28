@@ -10,16 +10,14 @@ load_dotenv()
 # Contexto para manejo de contraseñas con bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Leer la URL de la base de datos desde variables de entorno (Neon Tech)
-# Si no está definida, usará una base de datos SQLite local para pruebas rápidas
+# Leer la URL de la base de datos desde variables de entorno (Neon Tech / PostgreSQL / SQLite)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./lapis.db")
 
 # Ajuste automático para Neon Tech / PostgreSQL en Render:
-# PostgreSQL requiere que las cadenas comiencen con postgresql:// en lugar de postgres://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Configuración del motor según el tipo de base de datos (SQLite vs PostgreSQL/Neon)
+# Configuración del motor según el tipo de base de datos
 connect_args = {}
 if DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
@@ -27,13 +25,13 @@ if DATABASE_URL.startswith("sqlite"):
 engine = create_engine(
     DATABASE_URL,
     connect_args=connect_args,
-    pool_pre_ping=True  # Mantiene activa la conexión en Neon Tech evitando desconexiones por inactividad
+    pool_pre_ping=True
 )
 
 # Sesión local para interactuar con la base de datos
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Clase base de la que heredarán nuestros modelos de SQLAlchemy
+# Clase base de la que heredarán los modelos de SQLAlchemy
 Base = declarative_base()
 
 # Dependencia para obtener la sesión en los endpoints de FastAPI
@@ -44,25 +42,22 @@ def get_db():
     finally:
         db.close()
 
-# ==========================================
-# 🚀 INICIALIZACIÓN Y SEMBRADO DE BASE DE DATOS
-# ==========================================
 
 def init_db():
     """
-    Crea automáticamente las tablas si no existen e inserta 
-    los usuarios principales por defecto (Webmaster y Venerable Maestro).
+    Crea automáticamente las tablas e inserta/verifica
+    los usuarios principales por defecto y el código de pase inicial.
     """
     import models  # Importación tardía para evitar importaciones circulares
 
-    # Crear todas las tablas en la base de datos configurada
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
     try:
-        # 1. Verificar y sembrar al Webmaster (Trono Supremo / Administrador)
+        # 1. Verificar y sembrar al Webmaster
         webmaster_user = db.query(models.Usuario).filter(models.Usuario.usuario == "webmaster").first()
         if not webmaster_user:
+            print("🏛️ Creando usuario Webmaster...")
             pass_webmaster = pwd_context.hash("admin12345")
             admin_default = models.Usuario(
                 usuario="webmaster",
@@ -72,10 +67,13 @@ def init_db():
                 grado="maestro"
             )
             db.add(admin_default)
+        else:
+            print("ℹ️ Usuario 'webmaster' verificado.")
 
         # 2. Verificar y sembrar al Venerable Maestro
         venerable_user = db.query(models.Usuario).filter(models.Usuario.usuario == "venerable").first()
         if not venerable_user:
+            print("📜 Creando usuario Venerable Maestro...")
             pass_venerable = pwd_context.hash("lapis123")
             venerable_default = models.Usuario(
                 usuario="venerable",
@@ -85,10 +83,25 @@ def init_db():
                 grado="maestro"
             )
             db.add(venerable_default)
+        else:
+            print("ℹ️ Usuario 'venerable' verificado.")
+
+        # 3. Generar código de pase inicial si no existe
+        if hasattr(models, 'CodigoPase'):
+            pase_existente = db.query(models.CodigoPase).filter(models.CodigoPase.codigo == "PASE2026").first()
+            if not pase_existente:
+                print("🔑 Generando código de pase inicial: PASE2026")
+                pase_inicial = models.CodigoPase(
+                    codigo="PASE2026",
+                    creado_por="webmaster",
+                    usado=False
+                )
+                db.add(pase_inicial)
 
         db.commit()
+        print("✅ Inicialización de la base de datos completada con éxito.")
     except Exception as e:
         db.rollback()
-        print(f"[ERROR DB] Error durante la inicialización de la base de datos: {e}")
+        print(f"❌ Error durante la inicialización de la base de datos: {e}")
     finally:
         db.close()
