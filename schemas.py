@@ -11,7 +11,20 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=6)
 
 
-class RegistroRequest(BaseModel):
+class UsuarioInfoResponse(BaseModel):
+    id: int
+    usuario: str
+    nombre_real: str
+    rol: str
+    grado: Optional[str] = "Aprendiz"
+
+
+class LoginResponse(BaseModel):
+    token: str
+    usuario: UsuarioInfoResponse
+
+
+class UsuarioCreate(BaseModel):
     usuario: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=6)
     nombre_real: str = Field(..., min_length=3, max_length=100)
@@ -19,6 +32,10 @@ class RegistroRequest(BaseModel):
     grado: Optional[str] = Field("Aprendiz", description="Aprendiz, Compañero, Maestro Masón")
     codigo_pase: str = Field(..., description="Palabra de pase generada por el Trono o Webmaster")
     respuesta_secreta: Optional[str] = Field(None, description="Respuesta a la pregunta de seguridad")
+
+
+# Alias por si se referencia como RegistroRequest en otra parte
+RegistroRequest = UsuarioCreate
 
 
 class RecuperarPasswordRequest(BaseModel):
@@ -141,7 +158,7 @@ class TrazadoResponse(BaseModel):
     titulo: str
     contenido: str
     autor: str
-    rol_autor: str
+    rol_autor: Optional[str] = None
     camara_destino: str
     fecha_publicacion: Optional[Union[datetime, str]] = None
 
