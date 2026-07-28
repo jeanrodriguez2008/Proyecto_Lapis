@@ -55,93 +55,11 @@ document.addEventListener('alpine:init', () => {
       { id: 33, nombre: '33º - Soberano Gran Inspector General' }
     ],
 
-    // Publicaciones Dinámicas de Pasos Perdidos
-    tarjetasDinamicas: [
-      {
-        id: 1,
-        titulo: 'Bienvenida a los Pasos Perdidos',
-        categoria: 'principios',
-        contenido: 'Trazado de recepción y bienvenida a nuestro portal público institucional sobre valores y fraternidad.',
-        urlPdf: null,
-        autor: 'Venerable Maestro / Webmaster',
-        fecha: '2026-07-01'
-      },
-      {
-        id: 2,
-        titulo: 'Simbolismo y Filosofía en la Logia',
-        categoria: 'docencia',
-        contenido: 'Una breve revisión pedagógica e histórica sobre los rituales morales y el valor del estudio filosófico.',
-        urlPdf: null,
-        autor: 'Maestro de Docencia',
-        fecha: '2026-07-05'
-      },
-      {
-        id: 3,
-        titulo: 'Jornada Filantrópica Institucional',
-        categoria: 'accion',
-        contenido: 'Informe de las actividades benéficas y el auxilio fraterno extendido a la comunidad civil.',
-        urlPdf: null,
-        autor: 'Hospitalario',
-        fecha: '2026-07-12'
-      },
-      {
-        id: 4,
-        titulo: 'Constitución Masónica General',
-        categoria: 'biblioteca',
-        contenido: 'Documento fundamental con los principios y reglamentos para consulta abierta en PDF.',
-        urlPdf: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        autor: 'Biblioteca Digital',
-        fecha: '2026-07-18'
-      }
-    ],
+    // Publicaciones Dinámicas
+    tarjetasDinamicas: [],
+    trazados: [],
+    listaBalotajes: [],
 
-    // Trazados de la Cámara del Umbral
-    trazados: [
-      {
-        id: 101,
-        titulo: 'El Simbolismo de la Piedra Bruta',
-        grado: '1º - Aprendiz',
-        resumen: 'Instrucción fundamental sobre el trabajo interior en el primer grado.',
-        contenido: 'Contenido completo sobre la piedra bruta y su desbaste...',
-        autor: 'H:. Q:. H:. Inspector',
-        fecha: '2026-07-10'
-      },
-      {
-        id: 102,
-        titulo: 'La Marcha y la Regla de Cinco Pasos',
-        grado: '2º - Compañero',
-        resumen: 'Estudio de la geometría aplicada y el paso del Compañero.',
-        contenido: 'Contenido profundo sobre la marcha del segundo grado...',
-        autor: 'Segundo Vigilante',
-        fecha: '2026-07-15'
-      },
-      {
-        id: 103,
-        titulo: 'La Leyenda del Cuarto de Reflexiones',
-        grado: '3º - Maestro',
-        resumen: 'Análisis arquitectónico y simbólico reservado para el Magisterio.',
-        contenido: 'Plancha trazada reservada exclusivamente para la Tercera Cámara...',
-        autor: 'Primer Vigilante',
-        fecha: '2026-07-20'
-      }
-    ],
-
-    // Procesos de Balotaje
-    listaBalotajes: [
-      {
-        id: 1,
-        candidato: 'Venerable Maestro',
-        motivo: 'INICIACION',
-        descripcion: '¿Está de acuerdo con iniciar a los profanos actuales?',
-        activo: false,
-        fechaInicio: '2026-07-20',
-        fechaFin: '2026-07-27',
-        blancas: 1,
-        negras: 2
-      }
-    ],
-
-    // Solicitudes de Contacto
     listaSolicitudesContacto: [
       {
         id: 1,
@@ -154,7 +72,6 @@ document.addEventListener('alpine:init', () => {
       }
     ],
 
-    // Aspirantes Admitidos
     aspirantesRegistrados: [
       {
         id: 1,
@@ -165,7 +82,6 @@ document.addEventListener('alpine:init', () => {
       }
     ],
 
-    // Cuadro Logial
     listaHermanos: [
       { id: 1, nombre: 'Webmaster', email: 'webmaster@lapis.com', grado: 'Webmaster', rol: 'webmaster', esFijo: true, password: 'lapis123' },
       { id: 2, nombre: 'Venerable Maestro Actual', email: 'venerable@lapis.com', grado: '3º - Maestro', rol: 'venerable_maestro', esFijo: false, password: 'lapis123' },
@@ -174,7 +90,6 @@ document.addEventListener('alpine:init', () => {
       { id: 5, nombre: 'Carlos Mendoza', email: 'carlos.m@gmail.com', grado: '1º - Aprendiz', rol: 'aprendiz', esFijo: false, password: 'lapis123' }
     ],
 
-    // Escalafón Interno
     escalafon: [
       { grado: '1º - Aprendiz', rol: 'aprendiz' },
       { grado: '2º - Compañero', rol: 'companero' },
@@ -182,22 +97,15 @@ document.addEventListener('alpine:init', () => {
       { grado: '3º - Maestro', rol: 'venerable_maestro' }
     ],
 
-    // Modelos de Formulario
     formContacto: { nombre: '', email: '', telefono: '', redes: '', mensaje: '' },
     formRegistro: { codigoPase: '', nombre: '', grado: '1º - Aprendiz', email: '', password: '', respuestaSecreta: '' },
     formLogin: { email: '', password: '' },
     formRecuperar: { email: '', respuestaSecreta: '', nuevaPassword: '' },
 
-    // Inicialización del Estado
     async init() {
       let visitasLocales = localStorage.getItem('lapis_contador_visitas');
-      if (visitasLocales === null) {
-        visitasLocales = 1;
-      } else {
-        visitasLocales = parseInt(visitasLocales, 10) + 1;
-      }
-      this.contadorVisitas = visitasLocales;
-      localStorage.setItem('lapis_contador_visitas', visitasLocales);
+      this.contadorVisitas = visitasLocales ? parseInt(visitasLocales, 10) + 1 : 1;
+      localStorage.setItem('lapis_contador_visitas', this.contadorVisitas);
 
       const sesionGuardada = localStorage.getItem('lapis_sesion');
       if (sesionGuardada) {
@@ -214,27 +122,230 @@ document.addEventListener('alpine:init', () => {
         }
       }
 
+      await this.cargarPasosPerdidos();
+      await this.cargarTrazados();
+
+      if (this.usuarioLogueado) {
+        await this.cargarBalotajesBackend();
+      }
+    },
+
+    // Carga robusta con soporte de LocalStorage + API Backend
+    async cargarPasosPerdidos() {
+      let publicaciones = [];
+      
+      // 1. Intentar descargar desde la API
       if (window.apiConnection) {
         try {
           const remotePasos = await window.apiConnection.get('/pasos-perdidos');
-          if (remotePasos && Array.isArray(remotePasos) && remotePasos.length > 0) {
-            this.tarjetasDinamicas = remotePasos.map(p => ({
+          if (remotePasos && Array.isArray(remotePasos)) {
+            publicaciones = remotePasos.map(p => ({
               id: p.id,
               titulo: p.titulo,
               categoria: p.categoria,
               contenido: p.contenido,
               urlPdf: p.url_pdf || null,
-              autor: p.autor,
+              autor: p.autor || 'Institucional',
               fecha: p.fecha ? p.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
             }));
           }
         } catch (e) {
-          console.warn('Cargando tarjetas de Pasos Perdidos locales.');
+          console.warn('Backend API no disponible. Utilizando almacenamiento local de Pasos Perdidos.');
+        }
+      }
+
+      // 2. Combinar con elementos guardados en LocalStorage (Backup local)
+      const localesGuardados = localStorage.getItem('lapis_pasos_locales');
+      let publicacionesLocales = [];
+      if (localesGuardados) {
+        try {
+          publicacionesLocales = JSON.parse(localesGuardados);
+        } catch (e) {
+          publicacionesLocales = [];
+        }
+      }
+
+      // Fusionar evitando duplicados por ID
+      const idsServidor = new Set(publicaciones.map(p => p.id));
+      const localesNoDuplicadas = publicacionesLocales.filter(p => !idsServidor.has(p.id));
+      
+      this.tarjetasDinamicas = [...publicaciones, ...localesNoDuplicadas];
+
+      // 3. Si no hay nada, mostrar la tarjeta por defecto
+      if (this.tarjetasDinamicas.length === 0) {
+        this.tarjetasDinamicas = [
+          {
+            id: 1,
+            titulo: 'Bienvenida a los Pasos Perdidos',
+            categoria: 'principios',
+            contenido: 'Trazado de recepción y bienvenida a nuestro portal público institucional sobre valores y fraternidad.',
+            urlPdf: null,
+            autor: 'Venerable Maestro / Webmaster',
+            fecha: '2026-07-01'
+          }
+        ];
+      }
+    },
+
+    guardarPublicacionEnLocalStorage(nuevaTarjeta) {
+      let locales = [];
+      const datosGuardados = localStorage.getItem('lapis_pasos_locales');
+      if (datosGuardados) {
+        try { locales = JSON.parse(datosGuardados); } catch (e) { locales = []; }
+      }
+      locales.unshift(nuevaTarjeta);
+      localStorage.setItem('lapis_pasos_locales', JSON.stringify(locales));
+    },
+
+    async abrirModalNuevaTarjeta() {
+      if (!this.tienePermisoEdicionPasosPerdidos()) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Acceso Denegado',
+          text: 'Esta sección solo puede ser editada por el Venerable Maestro y el Webmaster.',
+          confirmButtonColor: '#b91c1c'
+        });
+        return;
+      }
+
+      const { value: formValues } = await Swal.fire({
+        title: 'Nueva Publicación en Pasos Perdidos',
+        html:
+          '<select id="swal-card-cat" class="swal2-input">' +
+          '  <option value="principios">Principios Fundamentales (Valores/Masonería)</option>' +
+          '  <option value="docencia">Docencia y Tradición (Filosofía/Historia)</option>' +
+          '  <option value="accion">Acción Exterior (Eventos Filantrópicos)</option>' +
+          '  <option value="biblioteca">Biblioteca Digital (Libro / Documento PDF)</option>' +
+          '</select>' +
+          '<input id="swal-card-titulo" class="swal2-input" placeholder="Título de la Publicación o Libro">' +
+          '<textarea id="swal-card-contenido" class="swal2-textarea" placeholder="Descripción o Resumen del Artículo/Libro"></textarea>' +
+          '<input id="swal-card-pdf" class="swal2-input" placeholder="URL Enlace PDF en la nube (Opcional)">',
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Publicar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d97706',
+        preConfirm: () => {
+          const cat = document.getElementById('swal-card-cat').value;
+          const t = document.getElementById('swal-card-titulo').value;
+          const c = document.getElementById('swal-card-contenido').value;
+          const pdf = document.getElementById('swal-card-pdf').value;
+          if (!t || !c) {
+            Swal.showValidationMessage('El título y el contenido son obligatorios');
+            return false;
+          }
+          if (cat === 'biblioteca' && !pdf) {
+            Swal.showValidationMessage('Se requiere la URL del enlace PDF para la Biblioteca Digital');
+            return false;
+          }
+          return [cat, t, c, pdf];
+        }
+      });
+
+      if (formValues) {
+        const [categoria, titulo, contenido, urlPdf] = formValues;
+        const nuevaTarjeta = {
+          id: Date.now(),
+          categoria: categoria,
+          titulo: titulo,
+          contenido: contenido,
+          urlPdf: urlPdf || null,
+          autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
+          fecha: new Date().toISOString().split('T')[0]
+        };
+
+        let guardadoEnBackend = false;
+
+        // Intentar guardar en FastAPI
+        if (window.apiConnection) {
+          try {
+            const res = await window.apiConnection.post('/pasos-perdidos', {
+              titulo: titulo,
+              contenido: contenido,
+              categoria: categoria,
+              url_pdf: urlPdf || null
+            });
+            if (res && res.id) nuevaTarjeta.id = res.id;
+            guardadoEnBackend = true;
+          } catch (e) {
+            console.warn('API POST no respondió adecuadamente. Guardando en persistencia local.');
+          }
         }
 
+        // Guardar siempre en estado de Alpine y en LocalStorage
+        this.tarjetasDinamicas.unshift(nuevaTarjeta);
+        this.guardarPublicacionEnLocalStorage(nuevaTarjeta);
+        this.categoriaPasosPerdidos = categoria;
+
+        Swal.fire({
+          icon: 'success',
+          title: guardadoEnBackend ? '¡Publicado en Servidor!' : '¡Publicado Localmente!',
+          text: guardadoEnBackend 
+            ? 'La publicación se ha guardado exitosamente en la base de datos.' 
+            : 'Publicación guardada localmente de forma permanente.',
+          timer: 2200,
+          showConfirmButton: false
+        });
+      }
+    },
+
+    async eliminarTarjeta(id) {
+      if (!this.tienePermisoEdicionPasosPerdidos()) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Acceso Denegado',
+          text: 'Esta sección solo puede ser editada por el Venerable Maestro y el Webmaster.',
+          confirmButtonColor: '#b91c1c'
+        });
+        return;
+      }
+
+      const result = await Swal.fire({
+        title: '¿Confirmas la eliminación?',
+        text: 'Deseas eliminar esta publicación de Pasos Perdidos.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#b91c1c',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        if (window.apiConnection) {
+          try {
+            await window.apiConnection.delete(`/pasos-perdidos/${id}`);
+          } catch (e) {
+            console.warn('Eliminando de almacenamiento local.');
+          }
+        }
+        
+        this.tarjetasDinamicas = this.tarjetasDinamicas.filter(t => t.id !== id);
+        
+        // Limpiar también de LocalStorage
+        const locales = localStorage.getItem('lapis_pasos_locales');
+        if (locales) {
+          try {
+            const parsed = JSON.parse(locales).filter(t => t.id !== id);
+            localStorage.setItem('lapis_pasos_locales', JSON.stringify(parsed));
+          } catch (e) {}
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Eliminado',
+          text: 'La publicación ha sido removida.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+    },
+
+    async cargarTrazados() {
+      if (window.apiConnection) {
         try {
           const remoteTrazados = await window.apiConnection.get('/trazados');
-          if (remoteTrazados && Array.isArray(remoteTrazados) && remoteTrazados.length > 0) {
+          if (remoteTrazados && Array.isArray(remoteTrazados)) {
             this.trazados = remoteTrazados.map(t => ({
               id: t.id,
               titulo: t.titulo,
@@ -244,14 +355,11 @@ document.addEventListener('alpine:init', () => {
               autor: t.autor,
               fecha: t.fecha_publicacion ? t.fecha_publicacion.split('T')[0] : new Date().toISOString().split('T')[0]
             }));
+            return;
           }
         } catch (e) {
-          console.warn('Cargando trazados locales por defecto.');
+          console.warn('Cargando trazados por defecto.');
         }
-      }
-
-      if (this.usuarioLogueado) {
-        this.cargarBalotajesBackend();
       }
     },
 
@@ -259,7 +367,6 @@ document.addEventListener('alpine:init', () => {
       this.categoriaPasosPerdidos = (this.categoriaPasosPerdidos === cat) ? null : cat;
     },
 
-    // FUNCIÓN PARA ABRIR ARTÍCULOS DE PASOS PERDIDOS EN MODAL (AMPLIADO)
     verArticuloPasosPerdidos(tarjeta) {
       let botonPdf = '';
       if (tarjeta.urlPdf) {
@@ -291,7 +398,7 @@ document.addEventListener('alpine:init', () => {
       if (!window.apiConnection) return;
       try {
         const remoteBalotajes = await window.apiConnection.get('/balotajes');
-        if (remoteBalotajes && Array.isArray(remoteBalotajes) && remoteBalotajes.length > 0) {
+        if (remoteBalotajes && Array.isArray(remoteBalotajes)) {
           this.listaBalotajes = remoteBalotajes.map(b => ({
             id: b.id,
             candidato: b.candidato,
@@ -407,7 +514,8 @@ document.addEventListener('alpine:init', () => {
             };
             localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
             this.formLogin = { email: '', password: '' };
-            this.cargarBalotajesBackend();
+            await this.cargarPasosPerdidos();
+            await this.cargarBalotajesBackend();
 
             Swal.fire({
               icon: 'success',
@@ -446,7 +554,7 @@ document.addEventListener('alpine:init', () => {
           };
           localStorage.setItem('lapis_sesion', JSON.stringify(this.usuarioLogueado));
           this.formLogin = { email: '', password: '' };
-          this.cargarBalotajesBackend();
+          await this.cargarBalotajesBackend();
 
           Swal.fire({
             icon: 'success',
@@ -494,148 +602,6 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    async abrirModalNuevaTarjeta() {
-      if (!this.tienePermisoEdicionPasosPerdidos()) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Acceso Denegado',
-          text: 'Esta sección solo puede ser editada por el Venerable Maestro y el Webmaster.',
-          confirmButtonColor: '#b91c1c'
-        });
-        return;
-      }
-
-      const { value: formValues } = await Swal.fire({
-        title: 'Nueva Publicación en Pasos Perdidos',
-        html:
-          '<select id="swal-card-cat" class="swal2-input">' +
-          '  <option value="principios">Principios Fundamentales (Valores/Masonería)</option>' +
-          '  <option value="docencia">Docencia y Tradición (Filosofía/Historia)</option>' +
-          '  <option value="accion">Acción Exterior (Eventos Filantrópicos)</option>' +
-          '  <option value="biblioteca">Biblioteca Digital (Libro / Documento PDF)</option>' +
-          '</select>' +
-          '<input id="swal-card-titulo" class="swal2-input" placeholder="Título de la Publicación o Libro">' +
-          '<textarea id="swal-card-contenido" class="swal2-textarea" placeholder="Descripción o Resumen del Artículo/Libro"></textarea>' +
-          '<input id="swal-card-pdf" class="swal2-input" placeholder="URL Enlace PDF en la nube (Opcional)">',
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Publicar',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#d97706',
-        preConfirm: () => {
-          const cat = document.getElementById('swal-card-cat').value;
-          const t = document.getElementById('swal-card-titulo').value;
-          const c = document.getElementById('swal-card-contenido').value;
-          const pdf = document.getElementById('swal-card-pdf').value;
-          if (!t || !c) {
-            Swal.showValidationMessage('El título y el contenido son obligatorios');
-            return false;
-          }
-          if (cat === 'biblioteca' && !pdf) {
-            Swal.showValidationMessage('Se requiere la URL del enlace PDF para la Biblioteca Digital');
-            return false;
-          }
-          return [cat, t, c, pdf];
-        }
-      });
-
-      if (formValues) {
-        const [categoria, titulo, contenido, urlPdf] = formValues;
-        
-        let subidaConExito = false;
-        if (window.apiConnection) {
-          try {
-            const resp = await window.apiConnection.post('/pasos-perdidos', {
-              titulo: titulo,
-              contenido: contenido,
-              categoria: categoria,
-              url_pdf: urlPdf || null
-            });
-
-            if (resp && resp.id) {
-              this.tarjetasDinamicas.unshift({
-                id: resp.id,
-                categoria: resp.categoria,
-                titulo: resp.titulo,
-                contenido: resp.contenido,
-                urlPdf: resp.url_pdf || null,
-                autor: resp.autor,
-                fecha: resp.fecha ? resp.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
-              });
-              subidaConExito = true;
-            }
-          } catch (e) {
-            console.warn('Fallo petición API Pasos Perdidos.');
-          }
-        }
-
-        if (!subidaConExito) {
-          const nuevaTarjeta = {
-            id: Date.now(),
-            categoria: categoria,
-            titulo: titulo,
-            contenido: contenido,
-            urlPdf: urlPdf || null,
-            autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
-            fecha: new Date().toISOString().split('T')[0]
-          };
-          this.tarjetasDinamicas.unshift(nuevaTarjeta);
-        }
-
-        this.categoriaPasosPerdidos = categoria;
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Publicado',
-          text: 'Publicación agregada con éxito a Pasos Perdidos.',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      }
-    },
-
-    async eliminarTarjeta(id) {
-      if (!this.tienePermisoEdicionPasosPerdidos()) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Acceso Denegado',
-          text: 'Esta sección solo puede ser editada por el Venerable Maestro y el Webmaster.',
-          confirmButtonColor: '#b91c1c'
-        });
-        return;
-      }
-
-      const result = await Swal.fire({
-        title: '¿Confirmas la eliminación?',
-        text: 'Deseas eliminar esta publicación de Pasos Perdidos.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#b91c1c',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      });
-
-      if (result.isConfirmed) {
-        if (window.apiConnection) {
-          try {
-            await window.apiConnection.delete(`/pasos-perdidos/${id}`);
-          } catch (e) {
-            console.warn('Tarjeta eliminada localmente.');
-          }
-        }
-        this.tarjetasDinamicas = this.tarjetasDinamicas.filter(t => t.id !== id);
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Eliminado',
-          text: 'La publicación ha sido removida.',
-          timer: 1500,
-          showConfirmButton: false
-        });
-      }
-    },
-
     async abrirModalCrearTrazado() {
       const { value: formValues } = await Swal.fire({
         title: 'Crear Trazado',
@@ -668,34 +634,28 @@ document.addEventListener('alpine:init', () => {
       });
 
       if (formValues) {
-        let nuevoTrazado = {
-          id: Date.now(),
-          ...formValues,
-          autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
-          fecha: new Date().toISOString().split('T')[0]
-        };
-
         if (window.apiConnection) {
           try {
             let camara = 'aprendiz';
             if (formValues.grado.includes('Compañero')) camara = 'companero';
             if (formValues.grado.includes('Maestro')) camara = 'maestro';
 
-            const resp = await window.apiConnection.post('/trazados', {
+            await window.apiConnection.post('/trazados', {
               titulo: formValues.titulo,
               contenido: formValues.contenido,
               camara_destino: camara
             });
-
-            if (resp && resp.id) {
-              nuevoTrazado.id = resp.id;
-            }
+            await this.cargarTrazados();
           } catch (e) {
             console.warn('Trazado guardado en memoria local.');
+            this.trazados.unshift({
+              id: Date.now(),
+              ...formValues,
+              autor: this.usuarioLogueado ? this.usuarioLogueado.nombre : 'Webmaster',
+              fecha: new Date().toISOString().split('T')[0]
+            });
           }
         }
-
-        this.trazados.unshift(nuevoTrazado);
 
         Swal.fire({
           icon: 'success',
@@ -770,37 +730,31 @@ document.addEventListener('alpine:init', () => {
       });
 
       if (formValues) {
-        let nuevoBalotaje = {
-          id: Date.now(),
-          candidato: formValues.candidato,
-          motivo: formValues.motivo,
-          descripcion: formValues.descripcion,
-          activo: true,
-          fechaInicio: formValues.fechaInicio,
-          fechaFin: formValues.fechaFin,
-          blancas: 0,
-          negras: 0
-        };
-
         if (window.apiConnection) {
           try {
-            const resp = await window.apiConnection.post('/balotajes', {
+            await window.apiConnection.post('/balotajes', {
               candidato: formValues.candidato,
               motivo: formValues.motivo,
               descripcion: formValues.descripcion,
               fecha_inicio: formValues.fechaInicio,
               fecha_fin: formValues.fechaFin
             });
-
-            if (resp && resp.id) {
-              nuevoBalotaje.id = resp.id;
-            }
+            await this.cargarBalotajesBackend();
           } catch (e) {
             console.warn('Balotaje guardado localmente.');
+            this.listaBalotajes.unshift({
+              id: Date.now(),
+              candidato: formValues.candidato,
+              motivo: formValues.motivo,
+              descripcion: formValues.descripcion,
+              activo: true,
+              fechaInicio: formValues.fechaInicio,
+              fechaFin: formValues.fechaFin,
+              blancas: 0,
+              negras: 0
+            });
           }
         }
-
-        this.listaBalotajes.unshift(nuevoBalotaje);
 
         Swal.fire({
           icon: 'success',
